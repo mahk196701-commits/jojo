@@ -14,6 +14,7 @@
 index.html          هيكل الواجهة وقسم «كيفية الاستخدام»
 styles.css          التنسيق (فاتح/داكن، متجاوب)
 js/data.js          الخطة الدراسية، الشابترات المقترحة، التقنيات، النصائح، قوالب الأسئلة
+js/question-bank.js أسئلة مكتوبة بإجاباتها: فيزياء (1) من شرائح المحاضرة (الفصول 2، 3، 4، 5، 7، 8 — 80 سؤالاً)
 js/scheduler.js     خوارزمية توليد الجدول (دوال نقية، تعمل في المتصفح وNode)
 js/app.js           الحالة، الحفظ في localStorage، العرض، والأحداث
 tests/              اختبارات الخوارزمية وحالات الحافة (node:test)
@@ -120,7 +121,7 @@ tools/build.js      بناء نسخة من ملف واحد
 
 ## 3. الكود
 
-الملفات كاملة في المستودع: [`index.html`](index.html) · [`styles.css`](styles.css) · [`js/app.js`](js/app.js) · [`js/scheduler.js`](js/scheduler.js) · [`js/data.js`](js/data.js) · [`tests/scheduler.test.js`](tests/scheduler.test.js) · [`tools/build.js`](tools/build.js)
+الملفات كاملة في المستودع: [`index.html`](index.html) · [`styles.css`](styles.css) · [`js/app.js`](js/app.js) · [`js/scheduler.js`](js/scheduler.js) · [`js/data.js`](js/data.js) · [`js/question-bank.js`](js/question-bank.js) · [`tests/scheduler.test.js`](tests/scheduler.test.js) · [`tools/build.js`](tools/build.js)
 
 ## 4. منطق خوارزمية توليد الجدول
 

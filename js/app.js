@@ -61,8 +61,17 @@
     return { dailyHours: 4, sessionMinutes: 50, breakMinutes: 10, reviewDays: 2, restDays: [], spacedReview: true, activeTime: 'evening', startTime: '' };
   }
 
-  function makeChapter(title, pages, topics) {
-    return { id: uid('ch'), title: String(title || '').trim() || 'شابتر بلا عنوان', pages: Number(pages) > 0 ? Number(pages) : 0, done: false, inExam: true, topics: topics || [], questions: [] };
+  function makeChapter(title, pages, topics, bank) {
+    const ch = { id: uid('ch'), title: String(title || '').trim() || 'شابتر بلا عنوان', pages: Number(pages) > 0 ? Number(pages) : 0, done: false, inExam: true, topics: topics || [], questions: [] };
+    if (bank) ch.bank = bank;
+    return ch;
+  }
+
+  // أسئلة البنك المكتوبة (مع الإجابات) لشابتر مرتبط ببنك
+  function bankQuestions(c) {
+    const list = (c.bank && D.QUESTION_BANK && D.QUESTION_BANK[c.bank]) || [];
+    return list.filter((b) => !c.questions.some((q) => q.text === b.text))
+      .map((b) => ({ id: uid('q'), text: b.text, type: b.type, status: 'todo', answer: b.answer || '', lecture: !!b.lecture, generated: false, fromBank: true }));
   }
 
   function nextColor(subjects) {
@@ -87,14 +96,26 @@
     };
   }
 
+  function courseChapters(code) {
+    const suggested = D.SUGGESTED_CHAPTERS[code] || [];
+    return suggested.map((c) => {
+      const ch = makeChapter(c.title, 0, c.topics, c.bank);
+      ch.questions = bankQuestions(ch);
+      return ch;
+    });
+  }
+
   function subjectFromCourse(course, subjects) {
     const suggested = D.SUGGESTED_CHAPTERS[course.code];
-    return makeSubject({
+    const sub = makeSubject({
       name: course.name, code: course.code, difficulty: course.difficulty, type: course.type,
       source: course.type === 'language' || course.type === 'memorize' ? 'notes' : 'book',
       suggested: !!suggested,
-      chapters: suggested ? suggested.map((c) => makeChapter(c.title, 0, c.topics)) : []
+      chapters: courseChapters(course.code)
     }, subjects);
+    sub.contentVersion = (D.COURSE_CONTENT_VERSION || {})[course.code] || 1;
+    if (sub.contentVersion > 1) sub.suggested = false; // شابترات من محاضرة الطالبة وليست مقترحة
+    return sub;
   }
 
   function createInitialState() {
@@ -120,15 +141,18 @@
       if (s.id) sub.id = String(s.id);
       if (Number.isInteger(s.colorIndex)) sub.colorIndex = s.colorIndex % COLOR_COUNT;
       if (s.demoDate) sub.demoDate = true;
+      sub.contentVersion = Number(s.contentVersion) || 1;
+      sub.contentDismissed = Number(s.contentDismissed) || 0;
       sub.chapters = (Array.isArray(s.chapters) ? s.chapters : []).map((c) => {
-        const ch = makeChapter(c && c.title, c && c.pages, Array.isArray(c && c.topics) ? c.topics : []);
+        const ch = makeChapter(c && c.title, c && c.pages, Array.isArray(c && c.topics) ? c.topics : [], c && c.bank);
         if (c && c.id) ch.id = String(c.id);
         ch.done = !!(c && c.done);
         ch.inExam = !(c && c.inExam === false);
         ch.questions = (Array.isArray(c && c.questions) ? c.questions : []).filter((q) => q && q.text).map((q) => ({
           id: q.id ? String(q.id) : uid('q'), text: String(q.text),
           type: D.QUESTION_TYPES[q.type] ? q.type : 'essay',
-          status: D.QUESTION_STATUS[q.status] ? q.status : 'todo', generated: !!q.generated
+          status: D.QUESTION_STATUS[q.status] ? q.status : 'todo', generated: !!q.generated,
+          answer: q.answer ? String(q.answer) : '', lecture: !!q.lecture, fromBank: !!q.fromBank
         }));
         return ch;
       });
@@ -267,6 +291,38 @@
       <button class="btn btn-sm" data-action="keep-done">كانت تعني أني أنهيت مذاكرتها</button></div></div>`;
   }
 
+  // تحديث شابترات مقرر (مثل فيزياء 1) من شرائح المحاضرة للبيانات المحفوظة سابقاً
+  function contentUpdates() {
+    const versions = D.COURSE_CONTENT_VERSION || {};
+    return state.subjects.filter((s) => versions[s.code] && (s.contentVersion || 1) < versions[s.code] && (s.contentDismissed || 0) < versions[s.code]);
+  }
+  function contentBanner() {
+    return contentUpdates().map((s) => {
+      const chs = D.SUGGESTED_CHAPTERS[s.code];
+      const qn = chs.reduce((a, c) => a + ((D.QUESTION_BANK[c.bank] || []).length), 0);
+      return `<div class="alert alert-info"><div class="alert-head"><span>شابترات «${esc(s.name)}» من شرائح محاضرتك جاهزة</span></div>
+        <p>${chs.length} شابترات (${esc(chs.map((c) => c.title.split(' — ')[0]).join('، '))}) مع ${qn} سؤالاً مكتوبة بإجاباتها. ستحل محل الشابترات المقترحة، وتُحدد كلها «مقررة» في الاختبار.</p>
+        <div class="btn-row"><button class="btn btn-sm btn-primary" data-action="apply-content" data-sid="${s.id}">استبدل الشابترات وأضف الأسئلة</button>
+        <button class="btn btn-sm" data-action="dismiss-content" data-sid="${s.id}">لاحقاً</button></div></div>`;
+    }).join('');
+  }
+  function applyContent(sid) {
+    const s = subjectById(sid);
+    if (!s) return;
+    const oldIds = new Set(s.chapters.map((c) => c.id));
+    s.chapters = courseChapters(s.code);
+    s.contentVersion = D.COURSE_CONTENT_VERSION[s.code];
+    s.suggested = false;
+    const hadSessions = state.sessions.some((x) => x.subjectId === s.id && !x.done);
+    state.sessions = state.sessions.filter((x) => x.subjectId !== s.id || x.done || !x.chapterIds.some((id) => oldIds.has(id)));
+    state.ui.qSubject = s.id;
+    const qn = s.chapters.reduce((a, c) => a + c.questions.length, 0);
+    toast(`حُدّثت «${s.name}»: ${s.chapters.length} شابترات و${qn} سؤالاً.`);
+    if (hadSessions && s.examDate) { generate(true); setView('questions'); return; }
+    markDirty();
+    setView('questions');
+  }
+
   function convertInExam() {
     state.subjects.forEach((s) => {
       if (!s.chapters.some((c) => c.done)) return;
@@ -301,7 +357,7 @@
     if (state.subjects.some((s) => s.demoDate)) {
       onboard += `<div class="alert alert-warn"><div class="alert-head"><span>بعض التواريخ تجريبية</span><button class="btn btn-sm" data-action="clear-demo">امسح التواريخ التجريبية</button></div><p>استبدلها بتواريخ اختباراتك الحقيقية من تبويب المواد.</p></div>`;
     }
-    $('#dash-onboard').innerHTML = inExamBanner() + onboard;
+    $('#dash-onboard').innerHTML = contentBanner() + inExamBanner() + onboard;
 
     // الإحصائيات
     const hours = (st.studyMinutes / 60);
@@ -443,7 +499,7 @@
   // ===================== المواد =====================
   function renderSubjects() {
     const list = sortedSubjects();
-    $('#subjects-list').innerHTML = inExamBanner() + (list.length ? list.map(subjectCard).join('')
+    $('#subjects-list').innerHTML = contentBanner() + inExamBanner() + (list.length ? list.map(subjectCard).join('')
       : `<div class="empty">لا توجد مواد بعد. اضغط «إضافة مادة» أو استورد مواد من «خطتي الجامعية».</div>`);
   }
 
@@ -884,7 +940,7 @@
     $('#q-type').value = state.ui.qType;
     const s = subjectById(state.ui.qSubject);
     const all = s.chapters.flatMap((c) => c.questions);
-    let html = `<div class="panel-title" style="margin-bottom:10px"><span class="muted">${all.length} سؤال · ${all.filter((q) => q.status === 'done').length} تم · ${all.filter((q) => q.status === 'review').length} يحتاج مراجعة</span>
+    let html = contentBanner() + `<div class="panel-title" style="margin-bottom:10px"><span class="muted">${all.length} سؤال · ${all.filter((q) => q.status === 'done').length} تم · ${all.filter((q) => q.status === 'review').length} يحتاج مراجعة</span>
       ${s.chapters.length ? `<button class="btn btn-sm" data-action="gen-all-questions" data-sid="${s.id}">ولّد أسئلة إرشادية لكل الشابترات</button>` : ''}</div>`;
     if (!s.chapters.length) html += '<div class="empty">هذه المادة بلا شابترات. أضف شابترات من تبويب المواد لتضيف أسئلتها.</div>';
     s.chapters.forEach((c) => {
@@ -908,15 +964,17 @@
 
   function questionItem(s, c, q) {
     return `<li class="q-item st-${q.status}">
-      <div class="q-text">${esc(q.text)}</div>
+      <div class="q-text" dir="auto">${esc(q.text)}${q.answer ? `<details class="q-answer"><summary>الإجابة</summary><div dir="auto">${esc(q.answer)}</div></details>` : ''}</div>
       <button class="icon-btn danger" data-action="delete-question" data-sid="${s.id}" data-cid="${c.id}" data-qid="${q.id}" aria-label="حذف السؤال">✕</button>
-      <div class="q-tags"><span class="chip">${esc(D.QUESTION_TYPES[q.type])}</span>${q.generated ? '<span class="chip">إرشادي</span>' : ''}
+      <div class="q-tags"><span class="chip">${esc(D.QUESTION_TYPES[q.type])}</span>${q.lecture ? '<span class="chip chip-accent">من المحاضرة</span>' : ''}${q.generated ? '<span class="chip">إرشادي</span>' : ''}
         <select data-bind="q-status" data-sid="${s.id}" data-cid="${c.id}" data-qid="${q.id}" aria-label="حالة السؤال">${optionList(D.QUESTION_STATUS, q.status)}</select></div>
     </li>`;
   }
 
   // توليد أسئلة إرشادية من القوالب حسب نوع المادة وموضوعات الشابتر
   function generateQuestions(s, c) {
+    const fromBank = bankQuestions(c);
+    if (fromBank.length) { c.questions.push(...fromBank); return fromBank.length; }
     const tpl = D.QUESTION_TEMPLATES[s.type] || D.QUESTION_TEMPLATES.understand;
     const topics = c.topics && c.topics.length ? c.topics : [c.title];
     const round = Math.floor(c.questions.filter((q) => q.generated).length / tpl.length);
@@ -1067,6 +1125,8 @@
     'delete-session': (el) => { state.sessions = state.sessions.filter((s) => s.id !== el.dataset.id); closeModal(); toast('حُذفت الجلسة.'); commit(); },
     'demo-dates': demoDates,
     'convert-inexam': convertInExam,
+    'apply-content': (el) => applyContent(el.dataset.sid),
+    'dismiss-content': (el) => { const s = subjectById(el.dataset.sid); if (s) { s.contentDismissed = D.COURSE_CONTENT_VERSION[s.code]; commit(); } },
     'keep-done': () => { state.inExamAsked = true; commit(); },
     'clear-demo': () => { state.subjects.forEach((s) => { if (s.demoDate) { s.examDate = ''; s.demoDate = false; } }); state.sessions = state.sessions.filter((x) => x.done); state.warnings = []; toast('مُسحت التواريخ التجريبية والجلسات غير المنجزة.'); commit(); },
     'add-level': (el) => addLevel(el.dataset.level),

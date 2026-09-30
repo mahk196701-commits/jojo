@@ -15,7 +15,7 @@ let html = read('index.html');
 // حماية نص السكربت من إنهاء الوسم مبكراً
 const inlineJs = (f) => '<script>\n' + read(f).replace(/<\/script/gi, '<\\/script') + '\n</script>';
 html = html.replace('<link rel="stylesheet" href="styles.css">', () => '<style>\n' + read('styles.css') + '\n</style>');
-['js/data.js', 'js/scheduler.js', 'js/app.js'].forEach((f) => {
+['js/data.js', 'js/question-bank.js', 'js/scheduler.js', 'js/app.js'].forEach((f) => {
   html = html.replace(`<script src="${f}"></script>`, () => inlineJs(f));
 });
 

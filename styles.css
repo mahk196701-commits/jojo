@@ -319,7 +319,10 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 .q-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
 .q-item.st-done { background: var(--green-soft); border-color: transparent; }
 .q-item.st-review { background: var(--orange-soft); border-color: transparent; }
-.q-text { overflow-wrap: anywhere; }
+.q-text { overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 6px; unicode-bidi: plaintext; }
+.q-answer { font-size: var(--step--1); background: var(--surface-2); border-radius: var(--radius-sm); padding: 6px 10px; }
+.q-answer summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.q-answer div { margin-top: 4px; font-family: var(--font-body); }
 .q-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; grid-column: 1 / -1; }
 .q-tags select { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 1px 8px; font-size: var(--step--1); }
 .q-add { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 8px; align-items: end; }
