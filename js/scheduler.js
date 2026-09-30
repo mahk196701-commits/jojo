@@ -93,6 +93,11 @@
     };
   }
 
+  // الشابترات المقررة في الاختبار فقط (inExam === false تعني خارج الاختبار)
+  function examChapters(subject) {
+    return (Array.isArray(subject && subject.chapters) ? subject.chapters : []).filter((c) => c && c.inExam !== false);
+  }
+
   // عدد جلسات المذاكرة التي يحتاجها الشابتر حسب الصفحات أو الصعوبة
   function partsFor(chapter, difficulty) {
     const cfg = DIFFICULTY[difficulty] || DIFFICULTY.medium;
@@ -103,7 +108,7 @@
 
   // ما تبقى من كل شابتر بعد احتساب الجلسات المنجزة سابقاً
   function chapterNeeds(subject, history) {
-    const chapters = Array.isArray(subject.chapters) ? subject.chapters : [];
+    const chapters = examChapters(subject);
     const needs = [];
     for (const ch of chapters) {
       if (ch.done) continue;
@@ -201,9 +206,12 @@
         warnings.push(W('warn', `اختبار «${name}» كان بتاريخ ${subj.examDate} وقد مضى، فاستُبعدت المادة من الجدول. حدّث التاريخ إن كان لديك اختبار قادم فيها.`, subj.id));
         continue;
       }
-      const chapters = Array.isArray(subj.chapters) ? subj.chapters : [];
+      const allChapters = Array.isArray(subj.chapters) ? subj.chapters : [];
+      const chapters = examChapters(subj);
       const needs = chapterNeeds(subj, history);
-      if (!chapters.length) {
+      if (allChapters.length && !chapters.length) {
+        warnings.push(W('warn', `«${name}»: لم تحدد أي شابتر مقرر في الاختبار، فجُدولت لها مراجعة عامة فقط. حدّد الشابترات المقررة من بطاقة المادة.`, subj.id));
+      } else if (!chapters.length) {
         warnings.push(W('warn', `«${name}» بلا شابترات، فجُدولت لها مراجعة عامة فقط. أضف الشابترات ليتوزع المنهج على الأيام.`, subj.id));
       } else if (!needs.length) {
         warnings.push(W('info', `كل شابترات «${name}» منجزة، فجُدولت لها مراجعة فقط.`, subj.id));
@@ -407,7 +415,7 @@
       plans.forEach((p) => touched.set(p, new Map()));
       history.forEach((s) => {
         const p = plans.find((x) => x.id === s.subjectId);
-        if (p && s.kind === 'study') (s.chapterIds || []).forEach((c) => touched.get(p).set(c, s.date < today ? s.date : addDays(today, -1)));
+        if (p && s.kind === 'study') (s.chapterIds || []).filter((c) => p.chapters.some((x) => x.id === c)).forEach((c) => touched.get(p).set(c, s.date < today ? s.date : addDays(today, -1)));
       });
       const studyByDate = {};
       placed.filter((x) => x.kind === 'study').forEach((x) => { (studyByDate[x.date] = studyByDate[x.date] || []).push(x); });
@@ -527,6 +535,6 @@
     DIFFICULTY, DEFAULT_SETTINGS,
     parseDate, formatDate, addDays, diffDays, todayLocal, weekday,
     normalizeSettings, partsFor, chapterNeeds, buildUnits, examUrgency,
-    generateSchedule, describeSession, chapterProgress, sessionsWord
+    generateSchedule, describeSession, examChapters, chapterProgress, sessionsWord
   };
 });

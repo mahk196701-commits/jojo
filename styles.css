@@ -215,12 +215,14 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 .exam-box .countdown { padding: 8px; }
 .hijri { font-size: var(--step--1); color: var(--muted); }
 .chapter-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.chapter-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 70px 56px auto; gap: 8px; align-items: center; padding: 4px 0; }
+.chapter-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 70px 56px auto; gap: 8px; align-items: center; padding: 4px 0; }
 .chapter-row .input { padding: 5px 8px; }
 .chapter-row .pages { text-align: center; }
 .chapter-pct { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); text-align: center; }
-.chapter-head { display: grid; grid-template-columns: auto minmax(0, 1fr) 70px 56px auto; gap: 8px; font-size: var(--step--1); color: var(--muted); font-weight: 600; }
-.chapter-head span:first-child { width: 18px; }
+.chapter-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 70px 56px auto; gap: 8px; font-size: var(--step--1); color: var(--muted); font-weight: 600; }
+.chapter-head span:nth-child(1), .chapter-head span:nth-child(3) { text-align: center; }
+.chapter-row > input[type="checkbox"] { justify-self: center; }
+.chapter-row.not-in-exam .input, .chapter-row.not-in-exam .chapter-pct { opacity: 0.5; }
 .chapter-head span:last-child { width: 32px; }
 .suggested-note { font-size: var(--step--1); color: var(--muted); background: var(--marker-soft); padding: 4px 10px; border-radius: var(--radius-sm); }
 
@@ -364,7 +366,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 /* ===== الشاشات الصغيرة ===== */
 @media (max-width: 720px) {
   .subject-body { grid-template-columns: minmax(0, 1fr); }
-  .chapter-row, .chapter-head { grid-template-columns: auto minmax(0, 1fr) 56px 44px auto; gap: 6px; }
+  .chapter-row, .chapter-head { grid-template-columns: 36px minmax(0, 1fr) 32px 48px 40px auto; gap: 4px; }
   .q-add { grid-template-columns: minmax(0, 1fr); }
   .brand-name { font-size: var(--step-2); }
   .stat-value { font-size: 1.4rem; }

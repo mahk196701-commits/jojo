@@ -62,7 +62,7 @@
   }
 
   function makeChapter(title, pages, topics) {
-    return { id: uid('ch'), title: String(title || '').trim() || 'شابتر بلا عنوان', pages: Number(pages) > 0 ? Number(pages) : 0, done: false, topics: topics || [], questions: [] };
+    return { id: uid('ch'), title: String(title || '').trim() || 'شابتر بلا عنوان', pages: Number(pages) > 0 ? Number(pages) : 0, done: false, inExam: true, topics: topics || [], questions: [] };
   }
 
   function nextColor(subjects) {
@@ -124,6 +124,7 @@
         const ch = makeChapter(c && c.title, c && c.pages, Array.isArray(c && c.topics) ? c.topics : []);
         if (c && c.id) ch.id = String(c.id);
         ch.done = !!(c && c.done);
+        ch.inExam = !(c && c.inExam === false);
         ch.questions = (Array.isArray(c && c.questions) ? c.questions : []).filter((q) => q && q.text).map((q) => ({
           id: q.id ? String(q.id) : uid('q'), text: String(q.text),
           type: D.QUESTION_TYPES[q.type] ? q.type : 'essay',
@@ -141,6 +142,7 @@
     st.generatedAt = raw.generatedAt || null;
     st.dirty = !!raw.dirty;
     st.focusMinutes = Number(raw.focusMinutes) || 0;
+    st.inExamAsked = !!raw.inExamAsked;
     st.ui = Object.assign(st.ui, raw.ui || {});
     return st;
   }
@@ -188,16 +190,18 @@
   }
 
   const chapterPct = (ch) => S.chapterProgress(ch, state.sessions);
+  const examChapters = (sub) => S.examChapters(sub);
   function subjectPct(sub) {
-    if (!sub.chapters.length) return 0;
-    return Math.round(sub.chapters.reduce((a, c) => a + chapterPct(c), 0) / sub.chapters.length);
+    const list = examChapters(sub);
+    if (!list.length) return 0;
+    return Math.round(list.reduce((a, c) => a + chapterPct(c), 0) / list.length);
   }
   const isOverdue = (s) => !s.done && s.date < today();
   const sessionTitle = (s) => S.describeSession(s, subjectById(s.subjectId));
 
   function stats() {
-    const chapters = state.subjects.flatMap((s) => s.chapters);
-    const questions = chapters.flatMap((c) => c.questions);
+    const chapters = state.subjects.flatMap((s) => examChapters(s));
+    const questions = state.subjects.flatMap((s) => s.chapters).flatMap((c) => c.questions);
     const done = state.sessions.filter((s) => s.done);
     return {
       chaptersDone: chapters.filter((c) => chapterPct(c) === 100).length,
@@ -254,6 +258,25 @@
     $('#brand-sub').textContent = plan.major + ' · ' + plan.university;
   }
 
+  // سؤال لمرة واحدة: من علّم الشابترات قبل وجود خيار «مقرر في الاختبار» قد يقصد به المقرر
+  function inExamBanner() {
+    if (state.inExamAsked || !state.subjects.some((s) => s.chapters.some((c) => c.done))) return '';
+    return `<div class="alert alert-warn"><div class="alert-head"><span>ماذا تعني علامة ✓ التي وضعتها على الشابترات؟</span></div>
+      <p>علامة ✓ في العمود الأول تعني «أنهيت مذاكرته»، لذلك استبعدها الجدول. الآن يوجد عمود مستقل باسم «مقرر» للشابترات المطلوبة في الاختبار.</p>
+      <div class="btn-row"><button class="btn btn-sm btn-primary" data-action="convert-inexam">كانت تعني المقرر في الاختبار: حوّلها وأعد توليد الجدول</button>
+      <button class="btn btn-sm" data-action="keep-done">كانت تعني أني أنهيت مذاكرتها</button></div></div>`;
+  }
+
+  function convertInExam() {
+    state.subjects.forEach((s) => {
+      if (!s.chapters.some((c) => c.done)) return;
+      s.chapters.forEach((c) => { c.inExam = c.done; c.done = false; });
+    });
+    state.inExamAsked = true;
+    toast('صارت الشابترات المحددة هي المقررة في الاختبار.');
+    generate(true);
+  }
+
   // ===================== الرئيسية =====================
   function renderDashboard() {
     const st = stats();
@@ -278,7 +301,7 @@
     if (state.subjects.some((s) => s.demoDate)) {
       onboard += `<div class="alert alert-warn"><div class="alert-head"><span>بعض التواريخ تجريبية</span><button class="btn btn-sm" data-action="clear-demo">امسح التواريخ التجريبية</button></div><p>استبدلها بتواريخ اختباراتك الحقيقية من تبويب المواد.</p></div>`;
     }
-    $('#dash-onboard').innerHTML = onboard;
+    $('#dash-onboard').innerHTML = inExamBanner() + onboard;
 
     // الإحصائيات
     const hours = (st.studyMinutes / 60);
@@ -420,8 +443,8 @@
   // ===================== المواد =====================
   function renderSubjects() {
     const list = sortedSubjects();
-    $('#subjects-list').innerHTML = list.length ? list.map(subjectCard).join('')
-      : `<div class="empty">لا توجد مواد بعد. اضغط «إضافة مادة» أو استورد مواد من «خطتي الجامعية».</div>`;
+    $('#subjects-list').innerHTML = inExamBanner() + (list.length ? list.map(subjectCard).join('')
+      : `<div class="empty">لا توجد مواد بعد. اضغط «إضافة مادة» أو استورد مواد من «خطتي الجامعية».</div>`);
   }
 
   function subjectCard(s) {
@@ -450,11 +473,12 @@
             <input type="date" id="exam-${s.id}" data-bind="examDate" data-sid="${s.id}" value="${esc(s.examDate)}"></label>
           ${s.examDate ? `<div class="hijri">${esc(fmtDate(s.examDate))}<br>${esc(fmtHijri(s.examDate))}${s.demoDate ? ' · <b>تاريخ تجريبي</b>' : ''}</div>` : '<div class="hijri">اختر التاريخ لتدخل المادة الجدول.</div>'}
           ${d != null && d < 0 ? '<div class="hijri">انتهى الاختبار؛ لن تُجدول المادة.</div>' : ''}
+          ${s.chapters.length ? examScopeField(s) : ''}
           <div class="progress-line"><span class="task-meta">إنجاز المادة</span><span class="num">${pct}%</span>${progressBar(pct)}</div>
         </div>
         <div>
           ${s.suggested ? `<p class="suggested-note">الشابترات مقترحة من توصيف المقرر المعتاد. عدّل العناوين وأضف عدد الصفحات لتطابق منهجك. <button class="btn btn-sm btn-ghost" data-action="dismiss-suggested" data-sid="${s.id}">فهمت</button></p>` : ''}
-          ${s.chapters.length ? `<div class="chapter-head"><span></span><span>الشابتر</span><span>الصفحات</span><span>الإنجاز</span><span></span></div>
+          ${s.chapters.length ? `<div class="chapter-head"><span title="أنهيت مذاكرته">أنهيت</span><span>الشابتر</span><span title="مقرر في الاختبار">مقرر</span><span>الصفحات</span><span>الإنجاز</span><span></span></div>
           <ul class="chapter-list">${s.chapters.map((c) => chapterRow(s, c)).join('')}</ul>`
             : '<p class="empty">لا توجد شابترات. المادة بلا شابترات تُجدول لها مراجعة عامة فقط.</p>'}
           <form class="btn-row" data-form="add-chapter" data-sid="${s.id}" style="margin-top:8px">
@@ -467,11 +491,24 @@
     </article>`;
   }
 
+  // «الاختبار يشمل حتى الشابتر...»: اختصار لتحديد المقرر بسرعة (مثل اختبارات منتصف الفصل)
+  function examScopeField(s) {
+    const flags = s.chapters.map((c) => c.inExam !== false);
+    const n = flags.lastIndexOf(true);
+    const prefix = n >= 0 && flags.every((f, i) => f === (i <= n));
+    const value = !prefix ? 'custom' : n === flags.length - 1 ? 'all' : String(n);
+    const opts = s.chapters.slice(0, -1).map((c, i) => `<option value="${i}"${value === String(i) ? ' selected' : ''}>حتى: ${esc(c.title)}</option>`).join('');
+    return `<label class="field"><span>الاختبار يشمل</span><select id="scope-${s.id}" data-bind="exam-scope" data-sid="${s.id}">
+      <option value="all"${value === 'all' ? ' selected' : ''}>كل الشابترات (${s.chapters.length})</option>${opts}
+      ${value === 'custom' ? `<option value="custom" selected>اختيار مخصص (${flags.filter(Boolean).length})</option>` : ''}</select></label>`;
+  }
+
   function chapterRow(s, c) {
     const pct = chapterPct(c);
-    return `<li class="chapter-row">
-      <input type="checkbox" data-bind="chapter-done" data-sid="${s.id}" data-cid="${c.id}" ${c.done ? 'checked' : ''} aria-label="تم إنجاز الشابتر">
+    return `<li class="chapter-row${c.inExam === false ? ' not-in-exam' : ''}">
+      <input type="checkbox" data-bind="chapter-done" data-sid="${s.id}" data-cid="${c.id}" ${c.done ? 'checked' : ''} aria-label="أنهيت مذاكرة الشابتر" title="أنهيت مذاكرته">
       <input class="input" data-bind="chapter-title" data-sid="${s.id}" data-cid="${c.id}" id="cht-${c.id}" value="${esc(c.title)}" aria-label="عنوان الشابتر">
+      <input type="checkbox" data-bind="chapter-inexam" data-sid="${s.id}" data-cid="${c.id}" ${c.inExam !== false ? 'checked' : ''} aria-label="مقرر في الاختبار" title="مقرر في الاختبار">
       <input class="input pages" type="number" min="0" data-bind="chapter-pages" data-sid="${s.id}" data-cid="${c.id}" id="chp-${c.id}" value="${c.pages || ''}" placeholder="—" aria-label="عدد الصفحات">
       <div><div class="chapter-pct">${pct}%</div>${progressBar(pct, true)}</div>
       <button class="icon-btn danger" data-action="delete-chapter" data-sid="${s.id}" data-cid="${c.id}" aria-label="حذف الشابتر">✕</button>
@@ -579,7 +616,7 @@
     // التنبيهات
     const groups = { error: [], warn: [], info: [] };
     state.warnings.forEach((w) => (groups[w.level] || groups.info).push(w.message));
-    let html = '';
+    let html = inExamBanner();
     const overdue = state.sessions.filter(isOverdue);
     if (!state.sessions.length) {
       html += `<div class="alert alert-info"><div class="alert-head"><span>لم يُولَّد الجدول بعد</span><button class="btn btn-sm btn-primary" data-action="generate">توليد الجدول</button></div>
@@ -778,7 +815,8 @@
     const cfg = effectiveSettings();
 
     // تقسيم الشابترات على الجلسات
-    const rows = s.chapters.map((c) => {
+    const excluded = s.chapters.length - examChapters(s).length;
+    const rows = examChapters(s).map((c) => {
       const related = mine.filter((x) => x.kind === 'study' && x.chapterIds.includes(c.id)).sort((a, b) => a.date.localeCompare(b.date));
       const est = S.partsFor(c, s.difficulty);
       const dates = related.map((x) => `<span class="${x.done ? 'muted' : ''}">${esc(fmtDate(x.date, { day: 'numeric', month: 'short' }))}${x.done ? ' ✓' : ''}</span>`).join('، ');
@@ -810,7 +848,8 @@
         : exam ? 'ولّد الجدول من تبويب «الجدول» لترى مواعيد جلسات هذه المادة.' : 'أدخل تاريخ الاختبار لتدخل المادة الجدول.'}</p>
       <div class="plan-grid">
         <div class="plan-block"><h4>تقسيم الشابترات على الجلسات</h4>
-          ${s.chapters.length ? `<div class="table-scroll"><table class="plan-table"><thead><tr><th>الشابتر</th><th>الجلسات</th><th>المواعيد</th><th>الإنجاز</th></tr></thead><tbody>${rows}</tbody></table></div>`
+          ${excluded ? `<p class="muted">${excluded} ${excluded === 1 ? 'شابتر' : 'شابترات'} خارج الاختبار ولا تظهر هنا.</p>` : ''}
+          ${examChapters(s).length ? `<div class="table-scroll"><table class="plan-table"><thead><tr><th>الشابتر</th><th>الجلسات</th><th>المواعيد</th><th>الإنجاز</th></tr></thead><tbody>${rows}</tbody></table></div>`
             : '<p class="empty">لا توجد شابترات؛ ستُجدول مراجعة عامة فقط.</p>'}
         </div>
         <div class="plan-block"><h4>تقنيات المذاكرة المناسبة</h4>
@@ -1027,6 +1066,8 @@
     'toggle-session': (el) => { if (el.dataset.close) closeModal(); toggleSession(el.dataset.id); },
     'delete-session': (el) => { state.sessions = state.sessions.filter((s) => s.id !== el.dataset.id); closeModal(); toast('حُذفت الجلسة.'); commit(); },
     'demo-dates': demoDates,
+    'convert-inexam': convertInExam,
+    'keep-done': () => { state.inExamAsked = true; commit(); },
     'clear-demo': () => { state.subjects.forEach((s) => { if (s.demoDate) { s.examDate = ''; s.demoDate = false; } }); state.sessions = state.sessions.filter((x) => x.done); state.warnings = []; toast('مُسحت التواريخ التجريبية والجلسات غير المنجزة.'); commit(); },
     'add-level': (el) => addLevel(el.dataset.level),
     'gen-questions': (el) => {
@@ -1124,6 +1165,18 @@
         break;
       case 'chapter-pages':
         if (c) { c.pages = Math.max(0, parseInt(t.value, 10) || 0); markDirty(); save(); }
+        break;
+      case 'chapter-inexam':
+        if (c) { c.inExam = t.checked; state.inExamAsked = true; markDirty(); commit(); }
+        break;
+      case 'exam-scope':
+        if (t.value !== 'custom') {
+          const n = t.value === 'all' ? s.chapters.length - 1 : Number(t.value);
+          s.chapters.forEach((ch, i) => { ch.inExam = i <= n; });
+          state.inExamAsked = true;
+          markDirty();
+          commit();
+        }
         break;
       case 'chapter-done':
         if (c) { c.done = t.checked; markDirty(); commit(); }

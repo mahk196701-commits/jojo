@@ -143,3 +143,21 @@ test('خطة المستوى الأول كاملة: 5 مواد بتواريخ م�
     assert.equal(covered.size, s.chapters.length, `كل شابترات ${s.id} مغطاة`);
   });
 });
+
+test('الشابترات خارج الاختبار لا تُجدول ولا تُراجع', () => {
+  const sub = subject('a', 14, 6, 'medium');
+  sub.chapters.forEach((c, i) => { c.inExam = i < 3; });
+  const res = run([sub]);
+  const ids = new Set(res.sessions.flatMap((s) => s.chapterIds));
+  ['a_c3', 'a_c4', 'a_c5'].forEach((id) => assert.ok(!ids.has(id), id + ' خارج الاختبار'));
+  ['a_c0', 'a_c1', 'a_c2'].forEach((id) => assert.ok(ids.has(id), id + ' مقرر'));
+  assert.equal(res.sessions.filter((s) => s.kind === 'study').length, 6);
+});
+
+test('لا شابتر مقرر: مراجعة عامة مع تنبيه واضح', () => {
+  const sub = subject('a', 10, 4);
+  sub.chapters.forEach((c) => { c.inExam = false; });
+  const res = run([sub]);
+  assert.equal(res.sessions.filter((s) => s.kind === 'study').length, 0);
+  assert.ok(res.warnings.some((w) => w.message.includes('لم تحدد أي شابتر مقرر')));
+});
