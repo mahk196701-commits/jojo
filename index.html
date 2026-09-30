@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>دفتر المذاكرة</title>
+  <meta name="description" content="تطبيق شخصي لتنظيم المذاكرة: المواد، تواريخ الاختبارات، جدول ذكي، خطط مذاكرة، وأسئلة متوقعة. يعمل بالكامل في المتصفح.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="32" height="32"><rect x="3" y="4" width="26" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 11h26M10 4v24" stroke="currentColor" stroke-width="2"/><path d="M15 17l3 3 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div>
+          <h1 class="brand-name">دفتر المذاكرة</h1>
+          <p class="brand-sub" id="brand-sub">جدولك الذكي حتى آخر اختبار</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="toggle-theme" id="theme-toggle" aria-label="تبديل الوضع الليلي">الوضع الليلي</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="أقسام التطبيق">
+      <div class="tabs-inner" role="tablist">
+        <button type="button" role="tab" class="tab" data-view="dashboard" id="tab-dashboard">الرئيسية</button>
+        <button type="button" role="tab" class="tab" data-view="subjects" id="tab-subjects">المواد</button>
+        <button type="button" role="tab" class="tab" data-view="schedule" id="tab-schedule">الجدول</button>
+        <button type="button" role="tab" class="tab" data-view="plans" id="tab-plans">خطط المذاكرة</button>
+        <button type="button" role="tab" class="tab" data-view="questions" id="tab-questions">الأسئلة المتوقعة</button>
+        <button type="button" role="tab" class="tab" data-view="curriculum" id="tab-curriculum">خطتي الجامعية</button>
+        <button type="button" role="tab" class="tab" data-view="help" id="tab-help">كيفية الاستخدام</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <!-- ===== الرئيسية ===== -->
+      <section class="view" id="view-dashboard" data-view-panel="dashboard" hidden>
+        <div id="dash-onboard"></div>
+        <div class="stat-row" id="dash-stats"></div>
+        <div class="grid-2">
+          <div class="panel" id="dash-today"></div>
+          <div class="panel" id="dash-exams"></div>
+        </div>
+        <div id="dash-overdue"></div>
+        <div class="grid-2">
+          <div class="panel" id="dash-progress"></div>
+          <div class="panel" id="dash-side">
+            <div id="dash-timer"></div>
+            <div id="dash-times"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== المواد ===== -->
+      <section class="view" id="view-subjects" data-view-panel="subjects" hidden>
+        <div class="view-head">
+          <div>
+            <h2>المواد والمناهج</h2>
+            <p class="muted">مرتبة تلقائياً حسب أقرب اختبار. عدّل تاريخ الاختبار والشابترات مباشرة من البطاقة.</p>
+          </div>
+          <button type="button" class="btn btn-primary" data-action="new-subject">+ إضافة مادة</button>
+        </div>
+        <div class="legend-row" aria-label="دلالة الألوان">
+          <span class="chip chip-red">أقل من 7 أيام</span>
+          <span class="chip chip-orange">7–14 يوماً</span>
+          <span class="chip chip-green">أكثر من 14 يوماً</span>
+        </div>
+        <div id="subjects-list" class="subject-list"></div>
+      </section>
+
+      <!-- ===== الجدول ===== -->
+      <section class="view" id="view-schedule" data-view-panel="schedule" hidden>
+        <div class="view-head">
+          <div>
+            <h2>الجدول الدراسي</h2>
+            <p class="muted">اسحب أي جلسة وأفلتها في يوم أو فترة أخرى لتعديل الجدول يدوياً.</p>
+          </div>
+          <button type="button" class="btn btn-primary" data-action="generate">توليد الجدول</button>
+        </div>
+
+        <details class="panel settings" id="schedule-settings" open>
+          <summary>إعدادات الجدول</summary>
+          <form id="settings-form" class="form-grid" autocomplete="off">
+            <label class="field">
+              <span>ساعات المذاكرة اليومية</span>
+              <input type="number" id="set-hours" name="dailyHours" min="0" max="16" step="0.5" inputmode="decimal">
+            </label>
+            <label class="field">
+              <span>مدة الجلسة (دقيقة)</span>
+              <input type="number" id="set-session" name="sessionMinutes" min="15" max="180" step="5" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>الراحة بين الجلسات (دقيقة)</span>
+              <input type="number" id="set-break" name="breakMinutes" min="0" max="60" step="5" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>أيام المراجعة قبل كل اختبار</span>
+              <input type="number" id="set-review" name="reviewDays" min="2" max="7" step="1" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>وقت نشاطي</span>
+              <select id="set-active" name="activeTime">
+                <option value="morning">صباحي</option>
+                <option value="afternoon">بعد الظهر</option>
+                <option value="evening">مسائي</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>بداية المذاكرة</span>
+              <input type="time" id="set-start" name="startTime">
+            </label>
+            <fieldset class="field field-wide">
+              <legend>أيام الراحة الأسبوعية</legend>
+              <div class="day-picks" id="set-rest"></div>
+            </fieldset>
+            <label class="field field-wide check">
+              <input type="checkbox" id="set-spaced" name="spacedReview">
+              <span>املأ الوقت الفارغ بمراجعات متباعدة للشابترات السابقة</span>
+            </label>
+          </form>
+        </details>
+
+        <div id="schedule-warnings"></div>
+
+        <div class="week-bar">
+          <div class="week-nav">
+            <button type="button" class="btn btn-ghost btn-sm" data-action="week-prev" aria-label="الأسبوع السابق">→ السابق</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="week-today">هذا الأسبوع</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="week-next" aria-label="الأسبوع التالي">التالي ←</button>
+          </div>
+          <strong id="week-label" class="week-label"></strong>
+        </div>
+        <div class="grid-scroll">
+          <div id="schedule-grid" class="week-grid"></div>
+        </div>
+        <div class="legend-row" id="schedule-legend">
+          <span class="kind-chip kind-study">مذاكرة</span>
+          <span class="kind-chip kind-review">مراجعة نهائية</span>
+          <span class="kind-chip kind-spaced">مراجعة متباعدة</span>
+          <span class="kind-chip kind-quick">مراجعة سريعة</span>
+          <span class="kind-chip kind-overdue">متأخرة</span>
+        </div>
+      </section>
+
+      <!-- ===== خطط المذاكرة ===== -->
+      <section class="view" id="view-plans" data-view-panel="plans" hidden>
+        <div class="view-head">
+          <div>
+            <h2>خطط المذاكرة</h2>
+            <p class="muted">خطة لكل مادة: تقسيم الشابترات على الجلسات، التقنيات المناسبة، فترات الراحة، ونصائح حسب نوع المادة.</p>
+          </div>
+        </div>
+        <div id="plans-list" class="plans-list"></div>
+      </section>
+
+      <!-- ===== الأسئلة ===== -->
+      <section class="view" id="view-questions" data-view-panel="questions" hidden>
+        <div class="view-head">
+          <div>
+            <h2>الأسئلة المتوقعة</h2>
+            <p class="muted">أضف أسئلتك أو ولّد أسئلة إرشادية لكل شابتر، وتابع حالة كل سؤال.</p>
+          </div>
+        </div>
+        <div class="filters">
+          <label class="field">
+            <span>المادة</span>
+            <select id="q-subject"></select>
+          </label>
+          <label class="field">
+            <span>الحالة</span>
+            <select id="q-status">
+              <option value="all">كل الأسئلة</option>
+              <option value="todo">لم يُذاكر</option>
+              <option value="review">يحتاج مراجعة</option>
+              <option value="done">تم</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>النوع</span>
+            <select id="q-type">
+              <option value="all">كل الأنواع</option>
+              <option value="mcq">اختيار من متعدد</option>
+              <option value="essay">مقالي</option>
+              <option value="tf">صح وخطأ</option>
+              <option value="problem">مسائل تطبيقية</option>
+            </select>
+          </label>
+        </div>
+        <div id="questions-list"></div>
+      </section>
+
+      <!-- ===== خطتي الجامعية ===== -->
+      <section class="view" id="view-curriculum" data-view-panel="curriculum" hidden>
+        <div class="view-head">
+          <div>
+            <h2>خطتي الجامعية</h2>
+            <p class="muted" id="curriculum-sub"></p>
+          </div>
+        </div>
+        <div id="curriculum"></div>
+      </section>
+
+      <!-- ===== كيفية الاستخدام ===== -->
+      <section class="view" id="view-help" data-view-panel="help" hidden>
+        <div class="view-head">
+          <div>
+            <h2>كيفية الاستخدام</h2>
+            <p class="muted">خمس خطوات تكفي لتبدأ. كل بياناتك محفوظة في متصفحك فقط ولا تُرسل لأي جهة.</p>
+          </div>
+        </div>
+        <div class="help">
+          <ol class="steps">
+            <li>
+              <h3>أضف موادك</h3>
+              <p>من تبويب <b>المواد</b> اضغط «إضافة مادة» واكتب اسمها وصعوبتها ونوعها (حفظ، فهم، تطبيق، رياضيات، لغات). اكتب الشابترات سطراً لكل شابتر، ويمكنك إضافة عدد الصفحات بعد علامة | مثل: <code>المتجهات | 24</code>. أو اكتب عدد الشابترات فقط وسيُنشئها التطبيق باسم «الشابتر 1، 2...».</p>
+              <p>مواد المستوى الأول من خطتك مضافة مسبقاً بشابترات مقترحة؛ عدّلها لتطابق توصيف مقررك. ولإضافة مواد مستوى آخر افتح <b>خطتي الجامعية</b>.</p>
+            </li>
+            <li>
+              <h3>أدخل تواريخ الاختبارات</h3>
+              <p>في بطاقة كل مادة عمودان: <b>«مقرر»</b> للشابترات المطلوبة في الاختبار (الجدول يذاكر ويراجع هذه فقط)، و<b>«أنهيت»</b> للشابتر الذي أنهيت مذاكرته فلا يُجدول مرة أخرى، و<b>«الجلسات»</b> لتحديد عدد جلسات مذاكرة كل شابتر. «آلي» يحسبها من الصفحات إن أدخلتها، وإلا من الصعوبة: سهل 1، متوسط 2، صعب 3. ولتحديد المقرر بسرعة اختر من «الاختبار يشمل» مثلاً «حتى: الشابتر 4».</p>
+              <p>اختر التاريخ من حقل «تاريخ الاختبار» في بطاقة كل مادة. يحسب التطبيق الأيام المتبقية ويرتب المواد حسب الأقرب، ويلوّنها: <span class="chip chip-red">أحمر</span> أقل من 7 أيام، <span class="chip chip-orange">برتقالي</span> من 7 إلى 14، <span class="chip chip-green">أخضر</span> أكثر من 14.</p>
+            </li>
+            <li>
+              <h3>اضبط وقتك وولّد الجدول</h3>
+              <p>في تبويب <b>الجدول</b> أدخل ساعات المذاكرة اليومية ومدة الجلسة ووقت نشاطك وأيام الراحة، ثم اضغط «توليد الجدول». يوزع التطبيق الشابترات على الأيام ويحجز يومين على الأقل للمراجعة النهائية قبل كل اختبار، ويضع المواد الأصعب في أول اليوم وقت ذروة تركيزك.</p>
+            </li>
+            <li>
+              <h3>عدّل وتابع</h3>
+              <p>اسحب أي جلسة وأفلتها في يوم أو فترة أخرى، أو اضغط عليها لنقلها أو حذفها. علّم الجلسة «تمت» عند إنهائها لتتحدث أشرطة التقدم والإحصائيات. الجلسات الفائتة غير المنجزة تظهر باللون الأحمر؛ اضغط «إعادة التوليد» لتوزيعها من جديد (الجلسات المنجزة لا تُمس).</p>
+            </li>
+            <li>
+              <h3>استخدم الخطط والأسئلة</h3>
+              <p>تبويب <b>خطط المذاكرة</b> يعرض لكل مادة التقنيات المناسبة (بومودورو، فاينمان، الاستدعاء النشط، التكرار المتباعد، الخرائط الذهنية) وتوزيع الراحة. وفي <b>الأسئلة المتوقعة</b> أضف أسئلتك أو ولّد أسئلة إرشادية، وحدّث حالة كل سؤال: لم يُذاكر، تم، يحتاج مراجعة.</p>
+            </li>
+          </ol>
+
+          <div class="panel">
+            <h3>أسئلة شائعة</h3>
+            <dl class="faq">
+              <dt>ماذا يحدث إذا لم يكفِ الوقت؟</dt>
+              <dd>يقلّص التطبيق أجزاء الشابترات أولاً (جلسة لكل شابتر على الأقل)، ثم يدمج الشابترات إن لزم، ويظهر لك تنبيهاً باقتراح زيادة الساعات.</dd>
+              <dt>مادة بلا شابترات أو بلا تاريخ اختبار؟</dt>
+              <dd>المادة بلا شابترات تُجدول لها مراجعة عامة فقط، والمادة بلا تاريخ لا تدخل الجدول، ويظهر تنبيه في الحالتين.</dd>
+              <dt>اختباران في يوم واحد؟</dt>
+              <dd>يظهر تنبيه «تعارض مواعيد» ويُقسم وقت المراجعة بين المادتين.</dd>
+              <dt>هل تضيع بياناتي عند إغلاق المتصفح؟</dt>
+              <dd>لا، تُحفظ تلقائياً في المتصفح. لكن مسح بيانات المتصفح يحذفها، لذلك صدّر نسخة احتياطية من الأسفل بين حين وآخر.</dd>
+            </dl>
+          </div>
+
+          <div class="panel" id="data-tools">
+            <h3>بياناتك</h3>
+            <p class="muted">صدّر نسخة احتياطية بصيغة JSON أو استورد نسخة سابقة. الاستيراد يستبدل البيانات الحالية.</p>
+            <div class="btn-row">
+              <button type="button" class="btn" data-action="export">تصدير JSON</button>
+              <label class="btn" for="import-file">استيراد ملف JSON</label>
+              <input type="file" id="import-file" accept="application/json,.json" class="visually-hidden">
+              <button type="button" class="btn btn-danger" data-action="reset">مسح كل البيانات</button>
+            </div>
+            <div id="export-box" hidden>
+              <label class="field">
+                <span>نسخة البيانات (انسخها واحفظها في ملف .json)</span>
+                <textarea id="export-text" rows="6" readonly dir="ltr"></textarea>
+              </label>
+              <div class="btn-row">
+                <button type="button" class="btn btn-sm" data-action="copy-export">نسخ</button>
+              </div>
+            </div>
+            <details>
+              <summary>استيراد بلصق النص</summary>
+              <label class="field">
+                <span>الصق محتوى ملف JSON هنا</span>
+                <textarea id="import-text" rows="5" dir="ltr"></textarea>
+              </label>
+              <button type="button" class="btn btn-sm" data-action="import-text">استيراد النص</button>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>يعمل دون إنترنت بعد التحميل · لا تسجيل دخول · بياناتك في جهازك فقط</span>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button type="button" class="icon-btn" data-action="close-modal" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <!-- SortableJS للسحب والإفلات (يدعم اللمس). إن تعذّر تحميله يعمل السحب الأصلي للمتصفح -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/question-bank.js"></script>
+  <script src="js/scheduler.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

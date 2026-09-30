@@ -1,0 +1,3013 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>دفتر المذاكرة</title>
+  <meta name="description" content="تطبيق شخصي لتنظيم المذاكرة: المواد، تواريخ الاختبارات، جدول ذكي، خطط مذاكرة، وأسئلة متوقعة. يعمل بالكامل في المتصفح.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap">
+  <style>
+/* =========================================================================
+   styles.css — دفتر المذاكرة
+   التخطيط: عمود واحد بعرض أقصى 1180px، تبويبات علوية، ورق مربعات هندسي خفيف للجدول
+   ========================================================================= */
+:root {
+  /* الألوان */
+  --bg: #f2f4f3;
+  --surface: #ffffff;
+  --surface-2: #e9eeec;
+  --ink: #16201e;
+  --muted: #5a6763;
+  --line: #d3dcd9;
+  --grid-line: rgba(15, 107, 99, 0.07);
+  --accent: #0f6b63;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9eeea;
+  --marker: #e0a126;
+  --marker-soft: #fbf0d6;
+  --red: #c23b3b;
+  --red-soft: #fbe3e1;
+  --orange: #c26a12;
+  --orange-soft: #fcebd8;
+  --green: #2a8448;
+  --green-soft: #dff2e5;
+  --shadow: 0 1px 2px rgba(20, 40, 36, 0.06), 0 6px 18px rgba(20, 40, 36, 0.06);
+  /* ألوان المواد */
+  --c0: #1f6fb2; --c1: #b0452f; --c2: #6c4fb0; --c3: #1e8a70; --c4: #b27a12; --c5: #b03b78; --c6: #3b7d2a; --c7: #4a5a6b;
+  /* الخطوط */
+  --font-display: 'Reem Kufi', 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+  --font-body: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, 'Noto Sans Arabic', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  /* المقاييس */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --step--1: 0.8125rem;
+  --step-0: 0.9375rem;
+  --step-1: 1.125rem;
+  --step-2: 1.4rem;
+  --step-3: 1.85rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --surface: #161e1d; --surface-2: #1d2826; --ink: #e4ebe9; --muted: #98a6a2; --line: #2a3634;
+    --grid-line: rgba(76, 194, 179, 0.06);
+    --accent: #4cc2b3; --accent-ink: #062521; --accent-soft: #173a36;
+    --marker: #f0b845; --marker-soft: #3a2f16;
+    --red: #f07b72; --red-soft: #3d1f1d; --orange: #f0a35a; --orange-soft: #3b2a17; --green: #6fcf8c; --green-soft: #183323;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.25);
+    --c0: #6cb2ee; --c1: #ee8c75; --c2: #b09cf0; --c3: #5fd1b2; --c4: #eabf5d; --c5: #ee85bb; --c6: #8fd07a; --c7: #a5b4c4;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #161e1d; --surface-2: #1d2826; --ink: #e4ebe9; --muted: #98a6a2; --line: #2a3634;
+  --grid-line: rgba(76, 194, 179, 0.06);
+  --accent: #4cc2b3; --accent-ink: #062521; --accent-soft: #173a36;
+  --marker: #f0b845; --marker-soft: #3a2f16;
+  --red: #f07b72; --red-soft: #3d1f1d; --orange: #f0a35a; --orange-soft: #3b2a17; --green: #6fcf8c; --green-soft: #183323;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.25);
+  --c0: #6cb2ee; --c1: #ee8c75; --c2: #b09cf0; --c3: #5fd1b2; --c4: #eabf5d; --c5: #ee85bb; --c6: #8fd07a; --c7: #a5b4c4;
+  color-scheme: dark;
+}
+
+/* ===== الأساسيات ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.65;
+}
+[hidden] { display: none !important; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; line-height: 1.3; margin: 0; text-wrap: balance; }
+h2 { font-size: var(--step-2); }
+h3 { font-size: var(--step-1); }
+p { margin: 0; }
+code { font-family: var(--font-mono); background: var(--surface-2); padding: 0 0.35em; border-radius: 4px; font-size: 0.9em; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--muted); }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.app { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 32px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ===== الترويسة ===== */
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 8px 0; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark { color: var(--accent); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); flex: none; }
+.brand-name { font-size: var(--step-3); letter-spacing: 0; }
+.brand-sub { color: var(--muted); font-size: var(--step--1); }
+
+/* ===== التبويبات ===== */
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); margin-inline: -16px; padding-inline: 16px; border-bottom: 1px solid var(--line); }
+.tabs-inner { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; padding-block: 6px; }
+.tab {
+  flex: none; border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  color: var(--muted); font-weight: 600; white-space: nowrap;
+}
+.tab:hover { background: var(--surface-2); color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+
+.main { min-width: 0; }
+.view { display: flex; flex-direction: column; gap: 16px; }
+.view-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.view-head > div { min-width: 0; flex: 1 1 280px; }
+.view-head .muted { margin-top: 4px; max-width: 65ch; }
+
+/* ===== الأزرار والحقول ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  padding: 8px 14px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-decoration: none; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; }
+.btn-danger { color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--line)); }
+.btn-danger:hover { background: var(--red-soft); border-color: var(--red); }
+.btn-sm { padding: 5px 10px; font-size: var(--step--1); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.icon-btn { border: 0; background: transparent; cursor: pointer; width: 32px; height: 32px; border-radius: 8px; color: var(--muted); display: inline-grid; place-items: center; flex: none; }
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn.danger:hover { color: var(--red); background: var(--red-soft); }
+
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; border: 0; margin: 0; padding: 0; }
+.field > span, .field > legend { font-size: var(--step--1); color: var(--muted); font-weight: 600; padding: 0; }
+.field input:not([type="checkbox"]), .field select, .field textarea, .input {
+  width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 10px; min-width: 0;
+}
+.field textarea { resize: vertical; line-height: 1.6; }
+.field input:focus, .field select:focus, .field textarea:focus, .input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.field.check { flex-direction: row; align-items: center; gap: 8px; }
+.field.check span { color: var(--ink); font-weight: 500; font-size: var(--step-0); }
+input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; flex: none; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.field-wide { grid-column: 1 / -1; }
+.hint { font-size: var(--step--1); color: var(--muted); }
+
+/* ===== اللوحات ===== */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.panel-title { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+.empty { color: var(--muted); padding: 16px; text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); }
+
+/* ===== الشرائح والشارات ===== */
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 10px; border-radius: 999px; font-size: var(--step--1); font-weight: 600; white-space: nowrap; background: var(--surface-2); color: var(--muted); }
+.chip-red { background: var(--red-soft); color: var(--red); }
+.chip-orange { background: var(--orange-soft); color: var(--orange); }
+.chip-green { background: var(--green-soft); color: var(--green); }
+.chip-past { background: var(--surface-2); color: var(--muted); text-decoration: line-through; }
+.chip-accent { background: var(--accent-soft); color: var(--accent); }
+.legend-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ===== الإحصائيات ===== */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.stat-label { font-size: var(--step--1); color: var(--muted); font-weight: 600; letter-spacing: 0.01em; }
+.stat-value { font-family: var(--font-mono); font-size: 1.7rem; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.stat-value small { font-size: 0.55em; color: var(--muted); }
+.stat-foot { font-size: var(--step--1); color: var(--muted); }
+
+/* ===== شريط التقدم ===== */
+.progress { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width 0.3s ease; }
+.progress.sm { height: 5px; }
+.progress-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; }
+.progress-line .progress { grid-column: 1 / -1; }
+
+/* ===== بطاقة الترحيب ===== */
+.onboard { background: var(--marker-soft); border: 1px solid color-mix(in srgb, var(--marker) 45%, transparent); border-radius: var(--radius); padding: 16px; display: flex; gap: 12px; flex-direction: column; }
+.onboard ol { margin: 0; padding-inline-start: 1.3em; display: flex; flex-direction: column; gap: 4px; }
+
+/* ===== قائمة اليوم والتنبيهات ===== */
+.task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); border-inline-start: 4px solid var(--subject-color, var(--accent)); }
+.task.done .task-title { text-decoration: line-through; color: var(--muted); }
+.task-title { font-weight: 600; overflow-wrap: anywhere; }
+.task-meta { font-size: var(--step--1); color: var(--muted); }
+.alert { border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; border: 1px solid transparent; }
+.alert-error { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 35%, transparent); }
+.alert-warn { background: var(--orange-soft); border-color: color-mix(in srgb, var(--orange) 35%, transparent); }
+.alert-info { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.alert ul { margin: 0; padding-inline-start: 1.2em; }
+.alert-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; font-weight: 700; }
+.warn-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* ===== العد التنازلي للاختبارات ===== */
+.exam-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.exam-item { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.exam-item:last-child { border-bottom: 0; }
+.countdown { font-family: var(--font-mono); text-align: center; border-radius: 8px; padding: 4px 0; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.countdown b { display: block; font-size: 1.35rem; }
+.countdown small { font-size: 0.7rem; font-family: var(--font-body); }
+.u-red { background: var(--red-soft); color: var(--red); }
+.u-orange { background: var(--orange-soft); color: var(--orange); }
+.u-green { background: var(--green-soft); color: var(--green); }
+.u-past, .u-none { background: var(--surface-2); color: var(--muted); }
+
+/* ===== بطاقات المواد ===== */
+.subject-list { display: flex; flex-direction: column; gap: 14px; }
+.subject-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.subject-card > header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 14px 16px; border-inline-start: 6px solid var(--subject-color); }
+.subject-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.subject-code { font-family: var(--font-mono); color: var(--muted); font-size: var(--step--1); }
+.subject-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.subject-actions { display: flex; gap: 2px; align-items: flex-start; }
+.subject-body { padding: 0 16px 16px; display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 16px; }
+.exam-box { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.exam-box .countdown { padding: 8px; }
+.hijri { font-size: var(--step--1); color: var(--muted); }
+.chapter-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.chapter-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 96px 64px auto; gap: 8px; align-items: center; padding: 4px 0; }
+.chapter-row .input { padding: 5px 8px; }
+.chapter-row .pages { text-align: center; }
+.chapter-pct { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); min-width: 3.2em; text-align: end; }
+.chapter-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.chapter-sub { display: flex; align-items: center; gap: 6px; }
+.chapter-sub .progress { flex: 1; }
+.chapter-row .sessions { padding: 5px 4px; font-size: var(--step--1); }
+.chapter-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 96px 64px auto; gap: 8px; font-size: var(--step--1); color: var(--muted); font-weight: 600; }
+.chapter-head span:nth-child(1), .chapter-head span:nth-child(3) { text-align: center; }
+.chapter-row > input[type="checkbox"] { justify-self: center; }
+.chapter-row.not-in-exam .input, .chapter-row.not-in-exam .chapter-pct { opacity: 0.5; }
+.chapter-head span:last-child { width: 32px; }
+.suggested-note { font-size: var(--step--1); color: var(--muted); background: var(--marker-soft); padding: 4px 10px; border-radius: var(--radius-sm); }
+
+/* ===== الجدول الأسبوعي ===== */
+.settings summary { cursor: pointer; font-family: var(--font-display); font-weight: 700; font-size: var(--step-1); }
+.settings[open] summary { margin-bottom: 4px; }
+.day-picks { display: flex; gap: 6px; flex-wrap: wrap; }
+.day-pick { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; background: var(--surface); }
+.day-pick:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.week-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.week-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.week-label { font-family: var(--font-display); }
+.grid-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.week-grid {
+  display: grid; grid-template-columns: 92px repeat(7, minmax(128px, 1fr)); min-width: 990px;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.wg-corner, .wg-day, .wg-time, .wg-cell { border-bottom: 1px solid var(--line); border-inline-start: 1px solid var(--line); }
+.wg-corner { background: var(--surface); }
+.wg-day { padding: 8px; background: var(--surface); position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
+.wg-day .d-name { font-weight: 700; }
+.wg-day .d-date { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); }
+.wg-day.is-today { background: var(--accent-soft); }
+.wg-day.is-today .d-name::after { content: ' · اليوم'; color: var(--accent); font-size: var(--step--1); }
+.wg-day.is-rest { background: var(--surface-2); }
+.wg-exam { display: inline-block; margin-top: 2px; font-size: 0.72rem; font-weight: 700; background: var(--ink); color: var(--bg); padding: 0 6px; border-radius: 4px; overflow-wrap: anywhere; }
+.wg-time { padding: 8px 6px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.3; }
+.wg-time b { color: var(--ink); font-family: var(--font-body); font-size: var(--step--1); }
+.wg-cell { min-height: 76px; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+.wg-cell.is-rest { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+.wg-cell.drag-over { background: var(--accent-soft); outline: 2px dashed var(--accent); outline-offset: -3px; }
+.session {
+  --sc: var(--subject-color, var(--accent));
+  background: color-mix(in srgb, var(--sc) 13%, var(--surface)); border: 1px solid color-mix(in srgb, var(--sc) 35%, transparent);
+  border-inline-start: 4px solid var(--sc); border-radius: 6px; padding: 4px 6px; cursor: grab; font-size: 0.78rem; line-height: 1.4;
+  display: flex; flex-direction: column; gap: 1px; touch-action: manipulation; user-select: none; text-align: start; color: var(--ink); width: 100%;
+}
+.session:active { cursor: grabbing; }
+.session .s-sub { font-weight: 700; color: var(--sc); overflow-wrap: anywhere; }
+.session .s-title { overflow-wrap: anywhere; }
+.session .s-kind { font-size: 0.68rem; color: var(--muted); }
+.session.kind-review { border-style: solid dashed dashed solid; }
+.session.kind-spaced { background: var(--surface); }
+.session.kind-quick { background: var(--marker-soft); }
+.session.is-done { opacity: 0.55; }
+.session.is-done .s-title { text-decoration: line-through; }
+.session.is-overdue { box-shadow: inset 0 0 0 2px var(--red); }
+.session.is-overdue .s-kind { color: var(--red); font-weight: 700; }
+.sortable-ghost { opacity: 0.35; }
+.sortable-chosen { box-shadow: var(--shadow); }
+.kind-chip { display: inline-flex; align-items: center; gap: 6px; font-size: var(--step--1); color: var(--muted); }
+.kind-chip::before { content: ''; width: 18px; height: 12px; border-radius: 3px; border: 1px solid var(--muted); border-inline-start-width: 4px; }
+.kind-chip.kind-review::before { border-style: solid dashed dashed solid; }
+.kind-chip.kind-spaced::before { background: var(--surface); }
+.kind-chip.kind-quick::before { background: var(--marker-soft); }
+.kind-chip.kind-overdue::before { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+
+/* ===== الخطط ===== */
+.plans-list { display: flex; flex-direction: column; gap: 16px; }
+.plan-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 14px; border-top: 5px solid var(--subject-color); }
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.plan-block { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.plan-block h4 { font-size: var(--step-0); color: var(--accent); }
+.table-scroll { overflow-x: auto; }
+.plan-table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
+.plan-table th, .plan-table td { text-align: start; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.plan-table th { color: var(--muted); font-weight: 600; }
+.plan-table td.num { white-space: nowrap; }
+.tech { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; }
+.tech summary { cursor: pointer; font-weight: 700; }
+.tech p { margin-top: 6px; color: var(--muted); }
+.tech ol { margin: 6px 0 0; padding-inline-start: 1.2em; }
+.break-bar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; font-size: 0.7rem; font-family: var(--font-mono); }
+.break-bar span { display: grid; place-items: center; color: var(--accent-ink); white-space: nowrap; overflow: hidden; }
+.break-bar .f { background: var(--accent); }
+.break-bar .b { background: var(--marker); color: var(--ink); }
+.break-bar .l { background: var(--green); }
+.tips { margin: 0; padding-inline-start: 1.2em; display: flex; flex-direction: column; gap: 4px; }
+.countdown-plan { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.countdown-plan li { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 8px; }
+.countdown-plan b { font-family: var(--font-mono); font-size: var(--step--1); color: var(--accent); }
+
+/* ===== الأسئلة ===== */
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 12px; }
+.q-chapter { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px; }
+.q-chapter > summary { cursor: pointer; padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; list-style: none; }
+.q-chapter > summary::-webkit-details-marker { display: none; }
+.q-chapter > summary::before { content: '◂'; position: absolute; opacity: 0; }
+.q-chapter[open] > summary { border-bottom: 1px solid var(--line); }
+.q-sum-title { font-weight: 700; overflow-wrap: anywhere; }
+.q-body { padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.q-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.q-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.q-item.st-done { background: var(--green-soft); border-color: transparent; }
+.q-item.st-review { background: var(--orange-soft); border-color: transparent; }
+.q-text { overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 6px; unicode-bidi: plaintext; }
+.q-answer { font-size: var(--step--1); background: var(--surface-2); border-radius: var(--radius-sm); padding: 6px 10px; }
+.q-answer summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.q-answer div { margin-top: 4px; font-family: var(--font-body); }
+.q-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; grid-column: 1 / -1; }
+.q-tags select { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 1px 8px; font-size: var(--step--1); }
+.q-add { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 8px; align-items: end; }
+
+/* ===== الخطة الجامعية ===== */
+.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+.level { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.level.is-current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.level-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.course-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.course { display: grid; grid-template-columns: 78px minmax(0, 1fr) auto; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--line); font-size: var(--step--1); align-items: baseline; }
+.course:last-child { border-bottom: 0; }
+.course code { background: none; padding: 0; color: var(--muted); direction: ltr; text-align: end; }
+.course .cr { font-family: var(--font-mono); color: var(--muted); white-space: nowrap; }
+
+/* ===== المؤقت ===== */
+.timer { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.timer-face { font-family: var(--font-mono); font-size: 2.6rem; text-align: center; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.timer-phase { text-align: center; font-size: var(--step--1); color: var(--muted); }
+.timer .btn-row { justify-content: center; }
+
+/* ===== التعليمات ===== */
+.help { display: flex; flex-direction: column; gap: 16px; max-width: 860px; }
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
+.steps li { counter-increment: step; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px 14px 16px; padding-inline-start: 60px; position: relative; display: flex; flex-direction: column; gap: 6px; }
+.steps li::before { content: counter(step); position: absolute; inset-inline-start: 16px; top: 14px; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-family: var(--font-mono); font-weight: 500; }
+.steps p { max-width: 70ch; }
+.faq { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.faq dt { font-weight: 700; margin-top: 6px; }
+.faq dd { margin: 0; color: var(--muted); }
+
+/* ===== النافذة المنبثقة والإشعارات ===== */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(8, 16, 14, 0.5); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.modal { background: var(--surface); color: var(--ink); border-radius: 14px; width: min(640px, 100%); max-height: calc(100% - 32px); overflow: auto; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.modal-body { padding: 16px 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; }
+.toasts { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); inset-inline: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 60; pointer-events: none; }
+.toast { background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; box-shadow: var(--shadow); max-width: 480px; animation: toast-in 0.2s ease; }
+@keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.app-footer { color: var(--muted); font-size: var(--step--1); text-align: center; padding-top: 8px; border-top: 1px solid var(--line); }
+
+/* ===== الشاشات الصغيرة ===== */
+@media (max-width: 720px) {
+  .subject-body { grid-template-columns: minmax(0, 1fr); }
+  .chapter-row, .chapter-head { grid-template-columns: 30px minmax(0, 1fr) 28px 74px 44px auto; gap: 4px; }
+  .q-add { grid-template-columns: minmax(0, 1fr); }
+  .brand-name { font-size: var(--step-2); }
+  .stat-value { font-size: 1.4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="32" height="32"><rect x="3" y="4" width="26" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 11h26M10 4v24" stroke="currentColor" stroke-width="2"/><path d="M15 17l3 3 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div>
+          <h1 class="brand-name">دفتر المذاكرة</h1>
+          <p class="brand-sub" id="brand-sub">جدولك الذكي حتى آخر اختبار</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="toggle-theme" id="theme-toggle" aria-label="تبديل الوضع الليلي">الوضع الليلي</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="أقسام التطبيق">
+      <div class="tabs-inner" role="tablist">
+        <button type="button" role="tab" class="tab" data-view="dashboard" id="tab-dashboard">الرئيسية</button>
+        <button type="button" role="tab" class="tab" data-view="subjects" id="tab-subjects">المواد</button>
+        <button type="button" role="tab" class="tab" data-view="schedule" id="tab-schedule">الجدول</button>
+        <button type="button" role="tab" class="tab" data-view="plans" id="tab-plans">خطط المذاكرة</button>
+        <button type="button" role="tab" class="tab" data-view="questions" id="tab-questions">الأسئلة المتوقعة</button>
+        <button type="button" role="tab" class="tab" data-view="curriculum" id="tab-curriculum">خطتي الجامعية</button>
+        <button type="button" role="tab" class="tab" data-view="help" id="tab-help">كيفية الاستخدام</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <!-- ===== الرئيسية ===== -->
+      <section class="view" id="view-dashboard" data-view-panel="dashboard" hidden>
+        <div id="dash-onboard"></div>
+        <div class="stat-row" id="dash-stats"></div>
+        <div class="grid-2">
+          <div class="panel" id="dash-today"></div>
+          <div class="panel" id="dash-exams"></div>
+        </div>
+        <div id="dash-overdue"></div>
+        <div class="grid-2">
+          <div class="panel" id="dash-progress"></div>
+          <div class="panel" id="dash-side">
+            <div id="dash-timer"></div>
+            <div id="dash-times"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== المواد ===== -->
+      <section class="view" id="view-subjects" data-view-panel="subjects" hidden>
+        <div class="view-head">
+          <div>
+            <h2>المواد والمناهج</h2>
+            <p class="muted">مرتبة تلقائياً حسب أقرب اختبار. عدّل تاريخ الاختبار والشابترات مباشرة من البطاقة.</p>
+          </div>
+          <button type="button" class="btn btn-primary" data-action="new-subject">+ إضافة مادة</button>
+        </div>
+        <div class="legend-row" aria-label="دلالة الألوان">
+          <span class="chip chip-red">أقل من 7 أيام</span>
+          <span class="chip chip-orange">7–14 يوماً</span>
+          <span class="chip chip-green">أكثر من 14 يوماً</span>
+        </div>
+        <div id="subjects-list" class="subject-list"></div>
+      </section>
+
+      <!-- ===== الجدول ===== -->
+      <section class="view" id="view-schedule" data-view-panel="schedule" hidden>
+        <div class="view-head">
+          <div>
+            <h2>الجدول الدراسي</h2>
+            <p class="muted">اسحب أي جلسة وأفلتها في يوم أو فترة أخرى لتعديل الجدول يدوياً.</p>
+          </div>
+          <button type="button" class="btn btn-primary" data-action="generate">توليد الجدول</button>
+        </div>
+
+        <details class="panel settings" id="schedule-settings" open>
+          <summary>إعدادات الجدول</summary>
+          <form id="settings-form" class="form-grid" autocomplete="off">
+            <label class="field">
+              <span>ساعات المذاكرة اليومية</span>
+              <input type="number" id="set-hours" name="dailyHours" min="0" max="16" step="0.5" inputmode="decimal">
+            </label>
+            <label class="field">
+              <span>مدة الجلسة (دقيقة)</span>
+              <input type="number" id="set-session" name="sessionMinutes" min="15" max="180" step="5" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>الراحة بين الجلسات (دقيقة)</span>
+              <input type="number" id="set-break" name="breakMinutes" min="0" max="60" step="5" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>أيام المراجعة قبل كل اختبار</span>
+              <input type="number" id="set-review" name="reviewDays" min="2" max="7" step="1" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>وقت نشاطي</span>
+              <select id="set-active" name="activeTime">
+                <option value="morning">صباحي</option>
+                <option value="afternoon">بعد الظهر</option>
+                <option value="evening">مسائي</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>بداية المذاكرة</span>
+              <input type="time" id="set-start" name="startTime">
+            </label>
+            <fieldset class="field field-wide">
+              <legend>أيام الراحة الأسبوعية</legend>
+              <div class="day-picks" id="set-rest"></div>
+            </fieldset>
+            <label class="field field-wide check">
+              <input type="checkbox" id="set-spaced" name="spacedReview">
+              <span>املأ الوقت الفارغ بمراجعات متباعدة للشابترات السابقة</span>
+            </label>
+          </form>
+        </details>
+
+        <div id="schedule-warnings"></div>
+
+        <div class="week-bar">
+          <div class="week-nav">
+            <button type="button" class="btn btn-ghost btn-sm" data-action="week-prev" aria-label="الأسبوع السابق">→ السابق</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="week-today">هذا الأسبوع</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="week-next" aria-label="الأسبوع التالي">التالي ←</button>
+          </div>
+          <strong id="week-label" class="week-label"></strong>
+        </div>
+        <div class="grid-scroll">
+          <div id="schedule-grid" class="week-grid"></div>
+        </div>
+        <div class="legend-row" id="schedule-legend">
+          <span class="kind-chip kind-study">مذاكرة</span>
+          <span class="kind-chip kind-review">مراجعة نهائية</span>
+          <span class="kind-chip kind-spaced">مراجعة متباعدة</span>
+          <span class="kind-chip kind-quick">مراجعة سريعة</span>
+          <span class="kind-chip kind-overdue">متأخرة</span>
+        </div>
+      </section>
+
+      <!-- ===== خطط المذاكرة ===== -->
+      <section class="view" id="view-plans" data-view-panel="plans" hidden>
+        <div class="view-head">
+          <div>
+            <h2>خطط المذاكرة</h2>
+            <p class="muted">خطة لكل مادة: تقسيم الشابترات على الجلسات، التقنيات المناسبة، فترات الراحة، ونصائح حسب نوع المادة.</p>
+          </div>
+        </div>
+        <div id="plans-list" class="plans-list"></div>
+      </section>
+
+      <!-- ===== الأسئلة ===== -->
+      <section class="view" id="view-questions" data-view-panel="questions" hidden>
+        <div class="view-head">
+          <div>
+            <h2>الأسئلة المتوقعة</h2>
+            <p class="muted">أضف أسئلتك أو ولّد أسئلة إرشادية لكل شابتر، وتابع حالة كل سؤال.</p>
+          </div>
+        </div>
+        <div class="filters">
+          <label class="field">
+            <span>المادة</span>
+            <select id="q-subject"></select>
+          </label>
+          <label class="field">
+            <span>الحالة</span>
+            <select id="q-status">
+              <option value="all">كل الأسئلة</option>
+              <option value="todo">لم يُذاكر</option>
+              <option value="review">يحتاج مراجعة</option>
+              <option value="done">تم</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>النوع</span>
+            <select id="q-type">
+              <option value="all">كل الأنواع</option>
+              <option value="mcq">اختيار من متعدد</option>
+              <option value="essay">مقالي</option>
+              <option value="tf">صح وخطأ</option>
+              <option value="problem">مسائل تطبيقية</option>
+            </select>
+          </label>
+        </div>
+        <div id="questions-list"></div>
+      </section>
+
+      <!-- ===== خطتي الجامعية ===== -->
+      <section class="view" id="view-curriculum" data-view-panel="curriculum" hidden>
+        <div class="view-head">
+          <div>
+            <h2>خطتي الجامعية</h2>
+            <p class="muted" id="curriculum-sub"></p>
+          </div>
+        </div>
+        <div id="curriculum"></div>
+      </section>
+
+      <!-- ===== كيفية الاستخدام ===== -->
+      <section class="view" id="view-help" data-view-panel="help" hidden>
+        <div class="view-head">
+          <div>
+            <h2>كيفية الاستخدام</h2>
+            <p class="muted">خمس خطوات تكفي لتبدأ. كل بياناتك محفوظة في متصفحك فقط ولا تُرسل لأي جهة.</p>
+          </div>
+        </div>
+        <div class="help">
+          <ol class="steps">
+            <li>
+              <h3>أضف موادك</h3>
+              <p>من تبويب <b>المواد</b> اضغط «إضافة مادة» واكتب اسمها وصعوبتها ونوعها (حفظ، فهم، تطبيق، رياضيات، لغات). اكتب الشابترات سطراً لكل شابتر، ويمكنك إضافة عدد الصفحات بعد علامة | مثل: <code>المتجهات | 24</code>. أو اكتب عدد الشابترات فقط وسيُنشئها التطبيق باسم «الشابتر 1، 2...».</p>
+              <p>مواد المستوى الأول من خطتك مضافة مسبقاً بشابترات مقترحة؛ عدّلها لتطابق توصيف مقررك. ولإضافة مواد مستوى آخر افتح <b>خطتي الجامعية</b>.</p>
+            </li>
+            <li>
+              <h3>أدخل تواريخ الاختبارات</h3>
+              <p>في بطاقة كل مادة عمودان: <b>«مقرر»</b> للشابترات المطلوبة في الاختبار (الجدول يذاكر ويراجع هذه فقط)، و<b>«أنهيت»</b> للشابتر الذي أنهيت مذاكرته فلا يُجدول مرة أخرى، و<b>«الجلسات»</b> لتحديد عدد جلسات مذاكرة كل شابتر. «آلي» يحسبها من الصفحات إن أدخلتها، وإلا من الصعوبة: سهل 1، متوسط 2، صعب 3. ولتحديد المقرر بسرعة اختر من «الاختبار يشمل» مثلاً «حتى: الشابتر 4».</p>
+              <p>اختر التاريخ من حقل «تاريخ الاختبار» في بطاقة كل مادة. يحسب التطبيق الأيام المتبقية ويرتب المواد حسب الأقرب، ويلوّنها: <span class="chip chip-red">أحمر</span> أقل من 7 أيام، <span class="chip chip-orange">برتقالي</span> من 7 إلى 14، <span class="chip chip-green">أخضر</span> أكثر من 14.</p>
+            </li>
+            <li>
+              <h3>اضبط وقتك وولّد الجدول</h3>
+              <p>في تبويب <b>الجدول</b> أدخل ساعات المذاكرة اليومية ومدة الجلسة ووقت نشاطك وأيام الراحة، ثم اضغط «توليد الجدول». يوزع التطبيق الشابترات على الأيام ويحجز يومين على الأقل للمراجعة النهائية قبل كل اختبار، ويضع المواد الأصعب في أول اليوم وقت ذروة تركيزك.</p>
+            </li>
+            <li>
+              <h3>عدّل وتابع</h3>
+              <p>اسحب أي جلسة وأفلتها في يوم أو فترة أخرى، أو اضغط عليها لنقلها أو حذفها. علّم الجلسة «تمت» عند إنهائها لتتحدث أشرطة التقدم والإحصائيات. الجلسات الفائتة غير المنجزة تظهر باللون الأحمر؛ اضغط «إعادة التوليد» لتوزيعها من جديد (الجلسات المنجزة لا تُمس).</p>
+            </li>
+            <li>
+              <h3>استخدم الخطط والأسئلة</h3>
+              <p>تبويب <b>خطط المذاكرة</b> يعرض لكل مادة التقنيات المناسبة (بومودورو، فاينمان، الاستدعاء النشط، التكرار المتباعد، الخرائط الذهنية) وتوزيع الراحة. وفي <b>الأسئلة المتوقعة</b> أضف أسئلتك أو ولّد أسئلة إرشادية، وحدّث حالة كل سؤال: لم يُذاكر، تم، يحتاج مراجعة.</p>
+            </li>
+          </ol>
+
+          <div class="panel">
+            <h3>أسئلة شائعة</h3>
+            <dl class="faq">
+              <dt>ماذا يحدث إذا لم يكفِ الوقت؟</dt>
+              <dd>يقلّص التطبيق أجزاء الشابترات أولاً (جلسة لكل شابتر على الأقل)، ثم يدمج الشابترات إن لزم، ويظهر لك تنبيهاً باقتراح زيادة الساعات.</dd>
+              <dt>مادة بلا شابترات أو بلا تاريخ اختبار؟</dt>
+              <dd>المادة بلا شابترات تُجدول لها مراجعة عامة فقط، والمادة بلا تاريخ لا تدخل الجدول، ويظهر تنبيه في الحالتين.</dd>
+              <dt>اختباران في يوم واحد؟</dt>
+              <dd>يظهر تنبيه «تعارض مواعيد» ويُقسم وقت المراجعة بين المادتين.</dd>
+              <dt>هل تضيع بياناتي عند إغلاق المتصفح؟</dt>
+              <dd>لا، تُحفظ تلقائياً في المتصفح. لكن مسح بيانات المتصفح يحذفها، لذلك صدّر نسخة احتياطية من الأسفل بين حين وآخر.</dd>
+            </dl>
+          </div>
+
+          <div class="panel" id="data-tools">
+            <h3>بياناتك</h3>
+            <p class="muted">صدّر نسخة احتياطية بصيغة JSON أو استورد نسخة سابقة. الاستيراد يستبدل البيانات الحالية.</p>
+            <div class="btn-row">
+              <button type="button" class="btn" data-action="export">تصدير JSON</button>
+              <label class="btn" for="import-file">استيراد ملف JSON</label>
+              <input type="file" id="import-file" accept="application/json,.json" class="visually-hidden">
+              <button type="button" class="btn btn-danger" data-action="reset">مسح كل البيانات</button>
+            </div>
+            <div id="export-box" hidden>
+              <label class="field">
+                <span>نسخة البيانات (انسخها واحفظها في ملف .json)</span>
+                <textarea id="export-text" rows="6" readonly dir="ltr"></textarea>
+              </label>
+              <div class="btn-row">
+                <button type="button" class="btn btn-sm" data-action="copy-export">نسخ</button>
+              </div>
+            </div>
+            <details>
+              <summary>استيراد بلصق النص</summary>
+              <label class="field">
+                <span>الصق محتوى ملف JSON هنا</span>
+                <textarea id="import-text" rows="5" dir="ltr"></textarea>
+              </label>
+              <button type="button" class="btn btn-sm" data-action="import-text">استيراد النص</button>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>يعمل دون إنترنت بعد التحميل · لا تسجيل دخول · بياناتك في جهازك فقط</span>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button type="button" class="icon-btn" data-action="close-modal" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <!-- SortableJS للسحب والإفلات (يدعم اللمس). إن تعذّر تحميله يعمل السحب الأصلي للمتصفح -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+  <script>
+/* =========================================================================
+   data.js — المحتوى الثابت: الخطة الدراسية، الشابترات المقترحة، تقنيات المذاكرة،
+   النصائح، وقوالب الأسئلة الإرشادية
+   ========================================================================= */
+(function (root) {
+  'use strict';
+
+  // ===== الخطة الدراسية (من ملف الخطة: جامعة طيبة — كلية الهندسة — هندسة الاتصالات) =====
+  // type: memorize (حفظ) | understand (فهم) | apply (تطبيق) | math (رياضيات) | language (لغات)
+  const STUDY_PLAN = {
+    university: 'جامعة طيبة',
+    college: 'كلية الهندسة',
+    major: 'هندسة الاتصالات',
+    admission: '1448هـ — الفصل الأول',
+    levels: [
+      { level: 1, status: 'مسجّل', courses: [
+        { code: 'PHYS 103', name: 'فيزياء (1)', credits: 4, difficulty: 'hard', type: 'apply' },
+        { code: 'MATH 105', name: 'تفاضل وتكامل (1)', credits: 3, difficulty: 'hard', type: 'math' },
+        { code: 'GS 101', name: 'دراسات إسلامية: العقيدة والعبادة', credits: 2, difficulty: 'easy', type: 'memorize' },
+        { code: 'ENG 101', name: 'مهارات اللغة الإنجليزية (1)', credits: 4, difficulty: 'medium', type: 'language' },
+        { code: 'GS 111', name: 'مهارات اللغة العربية (1)', credits: 2, difficulty: 'easy', type: 'language' }
+      ] },
+      { level: 2, courses: [
+        { code: 'ENG 102', name: 'مهارات اللغة الإنجليزية (2)', credits: 4, difficulty: 'medium', type: 'language' },
+        { code: 'GS 104', name: 'دراسات إسلامية: القيم والأخلاق الإسلامية', credits: 2, difficulty: 'easy', type: 'memorize' },
+        { code: 'CHEM 103', name: 'كيمياء (1)', credits: 4, difficulty: 'medium', type: 'apply' },
+        { code: 'PHYS 104', name: 'فيزياء (2)', credits: 4, difficulty: 'hard', type: 'apply' },
+        { code: 'MATH 106', name: 'تفاضل وتكامل (2)', credits: 3, difficulty: 'hard', type: 'math' }
+      ] },
+      { level: 3, courses: [
+        { code: 'ENGL 103', name: 'مهارات الكتابة', credits: 3, difficulty: 'medium', type: 'language' },
+        { code: 'GE 205', name: 'برمجة وتطبيقات الحاسب الآلي', credits: 3, difficulty: 'medium', type: 'apply' },
+        { code: 'EE 201', name: 'دوائر كهربائية (1)', credits: 4, difficulty: 'hard', type: 'apply' },
+        { code: 'GE 407', name: 'إدارة هندسية', credits: 2, difficulty: 'easy', type: 'understand' },
+        { code: 'MATH 308', name: 'المعادلات التفاضلية', credits: 3, difficulty: 'hard', type: 'math' },
+        { code: 'GE 101', name: 'مقدمة في الرسم الهندسي', credits: 2, difficulty: 'medium', type: 'apply' }
+      ] },
+      { level: 4, courses: [
+        { code: 'EE 341', name: 'أنظمة وإشارات', credits: 3, difficulty: 'hard', type: 'math' },
+        { code: 'MATH 315', name: 'الجبر الخطي باستخدام ماتلاب', credits: 3, difficulty: 'hard', type: 'math' },
+        { code: 'EE 212', name: 'تصميم رقمي (1)', credits: 4, difficulty: 'medium', type: 'apply' },
+        { code: 'ENGL 104', name: 'مهارات الاتصال', credits: 3, difficulty: 'easy', type: 'language' },
+        { code: 'GS 112', name: 'مهارات اللغة العربية (2)', credits: 2, difficulty: 'easy', type: 'language' },
+        { code: 'TE 212', name: 'تحليل الاستجابة الترددية', credits: 3, difficulty: 'hard', type: 'math' }
+      ] },
+      { level: 5, courses: [
+        { code: 'TE 361', name: 'أجهزة إلكترونية', credits: 4, difficulty: 'hard', type: 'apply' },
+        { code: 'MATH 221', name: 'الرياضيات المتقطعة', credits: 2, difficulty: 'medium', type: 'math' },
+        { code: 'FE 1', name: 'مقرر اختياري حر', credits: 2, difficulty: 'easy', type: 'understand' },
+        { code: 'GSE 1', name: 'مقرر متطلب جامعة اختياري (1)', credits: 2, difficulty: 'easy', type: 'memorize' },
+        { code: 'ENGL 214', name: 'مهارات الكتابة الفنية', credits: 3, difficulty: 'medium', type: 'language' },
+        { code: 'TE 311', name: 'العمليات العشوائية في أنظمة الاتصالات', credits: 3, difficulty: 'hard', type: 'math' }
+      ] },
+      { level: 6, courses: [
+        { code: 'TE 322', name: 'معالجة الإشارات الرقمية', credits: 3, difficulty: 'hard', type: 'math' },
+        { code: 'TE 332', name: 'أنظمة اتصالات (1)', credits: 3, difficulty: 'hard', type: 'apply' },
+        { code: 'TE 352', name: 'المجالات والموجات الكهرومغناطيسية', credits: 3, difficulty: 'hard', type: 'math' },
+        { code: 'MATH 317', name: 'مواضيع مختارة في الرياضيات', credits: 3, difficulty: 'hard', type: 'math' },
+        { code: 'GE 102', name: 'مقدمة في التصميم الهندسي', credits: 2, difficulty: 'medium', type: 'understand' },
+        { code: 'GSE 2', name: 'مقرر متطلب جامعة اختياري (2)', credits: 2, difficulty: 'easy', type: 'memorize' }
+      ] },
+      { level: 7, courses: [
+        { code: 'TE 441', name: 'شبكات المعلومات', credits: 3, difficulty: 'medium', type: 'understand' },
+        { code: 'TE 435', name: 'أنظمة اتصالات (2)', credits: 3, difficulty: 'hard', type: 'apply' },
+        { code: 'TE 433', name: 'الاتصالات الضوئية', credits: 3, difficulty: 'hard', type: 'apply' },
+        { code: 'TE 431', name: 'معمل الاتصالات (1)', credits: 1, difficulty: 'medium', type: 'apply' },
+        { code: 'GSE 3', name: 'مقرر متطلب جامعة اختياري (3)', credits: 2, difficulty: 'easy', type: 'memorize' },
+        { code: 'TE 451', name: 'تخطيط وتصميم الترددات الراديوية', credits: 3, difficulty: 'hard', type: 'apply' },
+        { code: 'GE 405', name: 'الاقتصاد الهندسي', credits: 2, difficulty: 'medium', type: 'math' }
+      ] },
+      { level: 8, courses: [
+        { code: 'TE 1', name: 'مقرر اختياري برنامج (1)', credits: 3, difficulty: 'medium', type: 'understand' },
+        { code: 'TE 492', name: 'مشروع تخرج (1)', credits: 2, difficulty: 'medium', type: 'apply' },
+        { code: 'TE 444', name: 'مقدمة في الأمن السيبراني', credits: 3, difficulty: 'medium', type: 'understand' },
+        { code: 'TE 436', name: 'اتصالات الأقمار الصناعية', credits: 3, difficulty: 'hard', type: 'apply' },
+        { code: 'TE 434', name: 'معمل الاتصالات (2)', credits: 1, difficulty: 'medium', type: 'apply' },
+        { code: 'TE 432', name: 'شبكات الاتصالات المتنقلة', credits: 3, difficulty: 'medium', type: 'understand' },
+        { code: 'TE 442', name: 'إنترنت الأشياء', credits: 3, difficulty: 'medium', type: 'understand' }
+      ] },
+      { level: 9, courses: [
+        { code: 'TE 2', name: 'مقرر اختياري برنامج (2)', credits: 3, difficulty: 'medium', type: 'understand' },
+        { code: 'TE 591', name: 'مشروع تخرج (2)', credits: 3, difficulty: 'medium', type: 'apply' },
+        { code: 'TE 551', name: 'تصميم دوائر الترددات الراديوية', credits: 3, difficulty: 'hard', type: 'apply' },
+        { code: 'TE 511', name: 'سياسات تنظيم الاتصالات', credits: 2, difficulty: 'easy', type: 'memorize' },
+        { code: 'TE 531', name: 'معمل الاتصالات (3)', credits: 1, difficulty: 'medium', type: 'apply' },
+        { code: 'GE 408', name: 'القيادة وريادة الأعمال', credits: 2, difficulty: 'easy', type: 'understand' },
+        { code: 'TE 3', name: 'مقرر اختياري برنامج (3)', credits: 3, difficulty: 'medium', type: 'understand' }
+      ] },
+      { level: 10, courses: [
+        { code: 'TE 592', name: 'التدريب التعاوني', credits: 6, difficulty: 'medium', type: 'apply' }
+      ] }
+    ]
+  };
+
+  const LEVEL_NAMES = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
+
+  // ===== شابترات مقترحة لمواد المستوى الأول (عدّلها لتطابق توصيف مقررك) =====
+  // topics: موضوعات فرعية تُستخدم في توليد أسئلة أدق
+  const SUGGESTED_CHAPTERS = {
+    'PHYS 103': [
+      { title: 'الفيزياء والقياس (Physics & Measurement)', topics: ['الوحدات الأساسية SI', 'تحليل الأبعاد', 'تحويل الوحدات', 'الأرقام المعنوية'] },
+      { title: 'الحركة في بعد واحد (Motion in 1D)', topics: ['السرعة المتوسطة واللحظية', 'التسارع', 'معادلات الحركة بتسارع ثابت', 'السقوط الحر'] },
+      { title: 'المتجهات (Vectors)', topics: ['تحليل المتجه إلى مركبات', 'جمع المتجهات', 'متجهات الوحدة'] },
+      { title: 'الحركة في بعدين (Motion in 2D)', topics: ['حركة المقذوفات', 'الحركة الدائرية المنتظمة', 'السرعة النسبية'] },
+      { title: 'قوانين نيوتن (Newton\'s Laws)', topics: ['القانون الأول والقصور', 'القانون الثاني F = ma', 'القانون الثالث', 'مخطط الجسم الحر'] },
+      { title: 'تطبيقات قوانين نيوتن والحركة الدائرية', topics: ['الاحتكاك السكوني والحركي', 'القوة المركزية', 'الحركة على منحدر'] },
+      { title: 'الشغل والطاقة الحركية (Work & Kinetic Energy)', topics: ['الشغل بقوة ثابتة ومتغيرة', 'مبرهنة الشغل والطاقة', 'القدرة'] },
+      { title: 'حفظ الطاقة (Conservation of Energy)', topics: ['الطاقة الكامنة', 'القوى المحافظة وغير المحافظة', 'قانون حفظ الطاقة الميكانيكية'] },
+      { title: 'الزخم الخطي والتصادمات (Momentum & Collisions)', topics: ['الدفع', 'حفظ الزخم', 'التصادم المرن وغير المرن', 'مركز الكتلة'] },
+      { title: 'دوران الجسم الجاسئ (Rotation)', topics: ['السرعة والتسارع الزاويان', 'عزم القصور الذاتي', 'العزم', 'طاقة الدوران'] }
+    ],
+    'MATH 105': [
+      { title: 'الدوال والنماذج (Functions)', topics: ['المجال والمدى', 'تركيب الدوال', 'الدوال العكسية', 'الدوال المثلثية والأسية واللوغاريتمية'] },
+      { title: 'النهايات (Limits)', topics: ['قوانين النهايات', 'النهايات من جهة واحدة', 'النهايات عند اللانهاية', 'مبرهنة الشطيرة'] },
+      { title: 'الاتصال (Continuity)', topics: ['شروط الاتصال', 'أنواع عدم الاتصال', 'مبرهنة القيمة المتوسطة'] },
+      { title: 'المشتقات وقواعد الاشتقاق (Derivatives)', topics: ['تعريف المشتقة بالنهاية', 'قاعدة الضرب والقسمة', 'قاعدة السلسلة', 'مشتقات الدوال المثلثية'] },
+      { title: 'الاشتقاق الضمني والمعدلات المرتبطة', topics: ['الاشتقاق الضمني', 'المعدلات المرتبطة', 'التقريب الخطي'] },
+      { title: 'تطبيقات الاشتقاق (Applications)', topics: ['القيم القصوى', 'مبرهنة القيمة المتوسطة', 'رسم المنحنيات', 'مسائل الأمثلية', 'قاعدة لوبيتال'] },
+      { title: 'التكامل (Integrals)', topics: ['المشتقات العكسية', 'مجموع ريمان', 'المبرهنة الأساسية للتفاضل والتكامل', 'التكامل بالتعويض'] }
+    ],
+    'GS 101': [
+      { title: 'مفهوم العقيدة وأهميتها ومصادرها', topics: ['تعريف العقيدة', 'مصادر التلقي', 'خصائص العقيدة الإسلامية'] },
+      { title: 'أركان الإيمان', topics: ['الإيمان بالله', 'الإيمان بالملائكة والكتب والرسل', 'اليوم الآخر والقدر'] },
+      { title: 'التوحيد وأقسامه', topics: ['توحيد الربوبية', 'توحيد الألوهية', 'توحيد الأسماء والصفات'] },
+      { title: 'نواقض التوحيد وما يضاده', topics: ['الشرك الأكبر والأصغر', 'البدعة', 'نواقض الإسلام'] },
+      { title: 'مفهوم العبادة وشروط قبولها', topics: ['تعريف العبادة', 'الإخلاص والمتابعة', 'شمول العبادة'] },
+      { title: 'أحكام الطهارة والصلاة', topics: ['أنواع الطهارة', 'شروط الصلاة وأركانها', 'مبطلات الصلاة'] },
+      { title: 'الزكاة والصيام والحج', topics: ['شروط وجوب الزكاة', 'أحكام الصيام', 'أركان الحج وواجباته'] }
+    ],
+    'ENG 101': [
+      { title: 'Unit 1', topics: ['المفردات', 'Present Simple'] },
+      { title: 'Unit 2', topics: ['المفردات', 'Present Continuous'] },
+      { title: 'Unit 3', topics: ['المفردات', 'Past Simple'] },
+      { title: 'Unit 4', topics: ['المفردات', 'Comparatives & Superlatives'] },
+      { title: 'Unit 5', topics: ['المفردات', 'Future forms'] },
+      { title: 'Unit 6', topics: ['المفردات', 'Modals'] },
+      { title: 'Reading & Writing Skills', topics: ['Skimming & Scanning', 'Paragraph writing'] }
+    ],
+    'GS 111': [
+      { title: 'مهارة الاستماع والتحدث', topics: ['آداب الاستماع', 'مهارات الإلقاء'] },
+      { title: 'مهارة القراءة', topics: ['القراءة الناقدة', 'استخلاص الفكرة الرئيسة'] },
+      { title: 'الكتابة والإملاء', topics: ['الهمزة المتوسطة والمتطرفة', 'همزتا الوصل والقطع', 'التاء المربوطة والمفتوحة'] },
+      { title: 'علامات الترقيم', topics: ['الفاصلة والنقطة', 'علامات الاستفهام والتعجب', 'علامتا التنصيص'] },
+      { title: 'النحو الوظيفي', topics: ['الجملة الاسمية', 'الجملة الفعلية', 'المرفوعات والمنصوبات'] },
+      { title: 'الأخطاء اللغوية الشائعة', topics: ['أخطاء الكتابة الشائعة', 'التصويب اللغوي'] }
+    ]
+  };
+
+  // ===== تقنيات المذاكرة =====
+  const TECHNIQUES = {
+    pomodoro: {
+      name: 'بومودورو (Pomodoro)',
+      what: 'مذاكرة مركزة لفترة محددة تليها راحة قصيرة، وبعد عدة دورات راحة طويلة.',
+      how: ['اضبط المؤقت على مدة التركيز', 'أغلق الجوال والإشعارات', 'ذاكر دون انقطاع حتى يرن المؤقت', 'خذ راحة قصيرة بعيداً عن الشاشة']
+    },
+    feynman: {
+      name: 'تقنية فاينمان (Feynman)',
+      what: 'اشرح المفهوم بكلمات بسيطة كأنك تعلّمه لطالب مبتدئ؛ أي تعثر يكشف فجوة في فهمك.',
+      how: ['اكتب اسم المفهوم أعلى الورقة', 'اشرحه بلغة بسيطة دون الرجوع للكتاب', 'حدد المواضع التي تعثرت فيها وارجع للمصدر', 'بسّط الشرح واستخدم مثالاً من الواقع']
+    },
+    activeRecall: {
+      name: 'الاستدعاء النشط (Active Recall)',
+      what: 'اختبر نفسك بدلاً من إعادة القراءة: أغلق الكتاب واسترجع المعلومات من ذاكرتك.',
+      how: ['بعد كل قسم أغلق الكتاب', 'اكتب كل ما تتذكره أو أجب عن أسئلة الشابتر', 'قارن إجابتك بالمصدر وصحّح', 'علّم ما نسيته لتراجعه لاحقاً']
+    },
+    spaced: {
+      name: 'التكرار المتباعد (Spaced Repetition)',
+      what: 'راجع المعلومة على فترات متزايدة (بعد يوم، ثم 3 أيام، ثم أسبوع) لتثبيتها في الذاكرة طويلة المدى.',
+      how: ['راجع ما ذاكرته اليوم بعد 24 ساعة', 'ثم بعد 3 أيام، ثم بعد أسبوع', 'الجدول يضيف جلسات «مراجعة متباعدة» تلقائياً في الوقت الفارغ']
+    },
+    mindMap: {
+      name: 'الخرائط الذهنية (Mind Mapping)',
+      what: 'ارسم فكرة الشابتر الرئيسية في المنتصف وتفرّع منها المفاهيم والعلاقات بينها.',
+      how: ['اكتب عنوان الشابتر في منتصف الورقة', 'أضف الأفكار الرئيسية كفروع', 'استخدم ألواناً وكلمات مفتاحية لا جملاً طويلة', 'راجع الخريطة بدل الكتاب في أيام المراجعة']
+    },
+    practice: {
+      name: 'حل المسائل المتدرج (Worked Examples → Practice)',
+      what: 'افهم مثالاً محلولاً خطوة بخطوة، ثم حل مسألة مشابهة دون النظر، ثم مسائل متنوعة.',
+      how: ['اقرأ مثالاً محلولاً وافهم سبب كل خطوة', 'غطِّ الحل وأعد حله بنفسك', 'حل 3–5 مسائل من نهاية الشابتر', 'سجّل أخطاءك في «دفتر الأخطاء»']
+    },
+    interleaving: {
+      name: 'التداخل (Interleaving)',
+      what: 'اخلط أنواع المسائل من شابترات مختلفة في جلسة واحدة لتتعلم اختيار الطريقة المناسبة.',
+      how: ['اختر مسائل من 2–3 شابترات', 'حلها بترتيب عشوائي', 'قبل الحل حدد: أي قانون أو طريقة تناسب هذه المسألة؟']
+    },
+    flashcards: {
+      name: 'البطاقات التعليمية (Flashcards)',
+      what: 'سؤال أو مصطلح على وجه، والإجابة على الوجه الآخر، مع مراجعة البطاقات الصعبة أكثر.',
+      how: ['اكتب بطاقة لكل تعريف أو دليل أو مصطلح', 'راجعها يومياً وافصل البطاقات الصعبة', 'ركّز على الصعبة في المراجعة التالية']
+    },
+    blurting: {
+      name: 'التفريغ (Blurting)',
+      what: 'بعد المذاكرة اكتب كل ما تتذكره عن الشابتر على ورقة بيضاء، ثم قارن بالمصدر.',
+      how: ['ذاكر القسم 20–30 دقيقة', 'أغلق الكتاب واكتب كل ما تتذكره', 'لوّن بلون مختلف ما نسيته', 'ابدأ به في المراجعة التالية']
+    },
+    sq3r: {
+      name: 'القراءة الفاعلة (SQ3R)',
+      what: 'تصفح، اسأل، اقرأ، سمّع، راجع: طريقة منظمة لقراءة الشابترات النظرية.',
+      how: ['تصفح العناوين والملخص', 'حوّل كل عنوان إلى سؤال', 'اقرأ بحثاً عن الإجابة', 'سمّع الإجابة بصوتك', 'راجع الأسئلة في نهاية الجلسة']
+    }
+  };
+
+  // اختيار التقنيات حسب الصعوبة ونوع المادة
+  const TECHNIQUES_BY_DIFFICULTY = {
+    hard: ['pomodoro', 'activeRecall', 'feynman', 'spaced'],
+    medium: ['pomodoro', 'activeRecall', 'mindMap', 'spaced'],
+    easy: ['pomodoro', 'mindMap', 'spaced']
+  };
+  const TECHNIQUES_BY_TYPE = {
+    memorize: ['flashcards', 'blurting'],
+    understand: ['sq3r', 'feynman'],
+    apply: ['practice', 'feynman'],
+    math: ['practice', 'interleaving'],
+    language: ['flashcards', 'activeRecall']
+  };
+
+  // توزيع فترات الراحة حسب الصعوبة
+  const BREAK_PLANS = {
+    hard:   { focus: 25, shortBreak: 5,  cycles: 4, longBreak: 20, note: 'التركيز العالي يستنزف بسرعة؛ فترات قصيرة تمنع الإرهاق.' },
+    medium: { focus: 40, shortBreak: 8,  cycles: 3, longBreak: 20, note: 'توازن بين العمق والاستمرارية.' },
+    easy:   { focus: 50, shortBreak: 10, cycles: 2, longBreak: 25, note: 'مادة خفيفة؛ جلسات أطول تكفي مع راحة منتظمة.' }
+  };
+
+  // نصائح حسب نوع المادة
+  const TYPE_TIPS = {
+    memorize: {
+      label: 'حفظ',
+      tips: ['قسّم المادة إلى مقاطع صغيرة واحفظ كل مقطع بالتكرار المتباعد', 'اربط كل معلومة بدليل أو مثال لتسهيل الاسترجاع', 'سمّع بصوت مرتفع أو لزميل', 'راجع قبل النوم مباشرة: النوم يثبّت المحفوظ', 'اكتب الأدلة والتعريفات على بطاقات وراجعها في أوقات الانتظار']
+    },
+    understand: {
+      label: 'فهم',
+      tips: ['ابدأ بالصورة الكبيرة (العناوين والملخص) قبل التفاصيل', 'اشرح كل مفهوم بكلماتك (تقنية فاينمان)', 'اربط المفاهيم ببعضها بخريطة ذهنية', 'اسأل «لماذا؟» و«كيف؟» عند كل فكرة', 'حل أسئلة المقارنة والتعليل لأنها الأكثر تكراراً']
+    },
+    apply: {
+      label: 'تطبيق',
+      tips: ['افهم القانون ومتى يُطبّق قبل حفظه', 'ارسم مخططاً للمسألة (مخطط الجسم الحر، الدائرة...) قبل الحل', 'اكتب الوحدات في كل خطوة لتكشف الأخطاء', 'اصنع ورقة قوانين ملخصة وراجعها يومياً', 'حل مسائل الاختبارات السابقة بتوقيت حقيقي']
+    },
+    math: {
+      label: 'رياضيات',
+      tips: ['لا تكتفِ بقراءة الحلول: حل بنفسك بالقلم', 'ابدأ بالمسائل السهلة ثم تدرّج', 'احتفظ بدفتر أخطاء وراجعه قبل الاختبار', 'احفظ القواعد والمبرهنات مع شروط تطبيقها', 'تحقق من إجابتك بالتعويض أو الرسم']
+    },
+    language: {
+      label: 'لغات',
+      tips: ['تعلّم المفردات في جمل لا كلمات منفردة', 'راجع المفردات يومياً ببطاقات متباعدة', 'اكتب فقرة قصيرة يومياً مستخدماً القاعدة الجديدة', 'اقرأ بصوت مرتفع لتحسين النطق والطلاقة', 'حل تمارين القواعد ثم صحّحها وافهم سبب الخطأ']
+    }
+  };
+
+  const SOURCE_TIPS = {
+    book: 'المصدر كتاب: ركّز على الأمثلة المحلولة وأسئلة نهاية الفصل، واقرأ الملخص أولاً.',
+    notes: 'المصدر ملزمة: غالباً مختصرة ومركّزة؛ أضف عليها ملاحظاتك وحل كل تمارينها.',
+    lectures: 'المصدر محاضرات: راجع كل محاضرة في يومها، وأكمل النقص من الشرائح والتسجيلات.'
+  };
+
+  const TYPE_LABELS = { memorize: 'حفظ', understand: 'فهم', apply: 'تطبيق', math: 'رياضيات', language: 'لغات' };
+  const DIFFICULTY_LABELS = { easy: 'سهل', medium: 'متوسط', hard: 'صعب' };
+  const SOURCE_LABELS = { book: 'كتاب', notes: 'ملزمة', lectures: 'محاضرات' };
+  const QUESTION_TYPES = { mcq: 'اختيار من متعدد', essay: 'مقالي', tf: 'صح وخطأ', problem: 'مسائل تطبيقية' };
+  const QUESTION_STATUS = { todo: 'لم يُذاكر', done: 'تم', review: 'يحتاج مراجعة' };
+
+  // ===== قوالب الأسئلة الإرشادية: {ch} = عنوان الشابتر، {t} = موضوع فرعي =====
+  const QUESTION_TEMPLATES = {
+    math: [
+      ['problem', 'أوجد/احسب: حل 3 مسائل متدرجة على «{t}» من تمارين نهاية الشابتر مع كتابة كل خطوة.'],
+      ['problem', 'مسألة تطبيقية: كوّن مسألة من واقع الحياة تستخدم «{t}» ثم حلها.'],
+      ['problem', 'أثبت أو برهن: القاعدة الأساسية في «{t}» واذكر شروط استخدامها.'],
+      ['mcq', 'اختيار من متعدد: أي الطرق هي الأنسب لحل مسائل «{t}»؟ اكتب 4 خيارات وحدد الصحيح مع السبب.'],
+      ['tf', 'صح أم خطأ: «كل قاعدة في {ch} تنطبق دون شروط» — صحّح العبارة واذكر مثالاً مضاداً.'],
+      ['essay', 'اشرح بخطواتك: متى تستخدم «{t}»؟ وما الأخطاء الشائعة عند تطبيقها؟']
+    ],
+    apply: [
+      ['problem', 'مسألة: احسب المطلوب في مسألة على «{t}» مع رسم المخطط وكتابة الوحدات.'],
+      ['problem', 'مسألة مركّبة: اربط بين «{t}» ومفهوم آخر من «{ch}» في مسألة واحدة.'],
+      ['essay', 'علّل: اشرح المبدأ الفيزيائي/الهندسي وراء «{t}» بمثال من الواقع.'],
+      ['mcq', 'اختيار من متعدد: ما القانون المستخدم في «{t}»؟ ضع 4 خيارات مع وحدة كل كمية.'],
+      ['tf', 'صح أم خطأ: عبارة شائعة الخطأ عن «{t}» — حددها وصحّحها.'],
+      ['essay', 'قارن: ما الفرق بين المفاهيم المتشابهة في «{ch}»؟']
+    ],
+    memorize: [
+      ['essay', 'عرّف: «{t}» لغةً واصطلاحاً مع الدليل.'],
+      ['essay', 'عدّد: اذكر أقسام/شروط/أركان «{t}» بالترتيب.'],
+      ['mcq', 'اختيار من متعدد: أي مما يلي من «{t}»؟ ضع 4 خيارات متقاربة.'],
+      ['tf', 'صح أم خطأ: عبارة عن «{t}» مع تصحيح الخطأ إن وجد.'],
+      ['essay', 'استدل: اذكر دليلاً من الكتاب أو السنة على «{t}».'],
+      ['tf', 'صح أم خطأ: حكم أو مفهوم من «{ch}» يُخلط كثيراً مع غيره.']
+    ],
+    understand: [
+      ['essay', 'اشرح: الفكرة الرئيسية في «{t}» بأسلوبك.'],
+      ['essay', 'قارن: بين «{t}» ومفهوم قريب منه في «{ch}».'],
+      ['essay', 'علّل: لماذا يُعد «{t}» مهماً؟ وما أثره؟'],
+      ['mcq', 'اختيار من متعدد: أي العبارات تصف «{t}» بدقة؟'],
+      ['tf', 'صح أم خطأ: عبارة تحليلية عن «{t}» مع التعليل.'],
+      ['problem', 'حالة دراسية: طبّق مفهوم «{t}» على موقف واقعي.']
+    ],
+    language: [
+      ['mcq', 'Vocabulary: اختر المرادف/المعنى الصحيح لكلمات «{ch}» (10 كلمات).'],
+      ['mcq', 'Grammar / قواعد: اختر الصيغة الصحيحة في جمل على «{t}».'],
+      ['tf', 'صح أم خطأ: حدد الجمل الصحيحة لغوياً في «{t}» وصحّح الخاطئة.'],
+      ['essay', 'Writing / كتابة: اكتب فقرة من 80–120 كلمة تستخدم فيها «{t}».'],
+      ['problem', 'تطبيق: أعد صياغة 5 جمل باستخدام «{t}».'],
+      ['essay', 'Reading / قراءة: لخّص نص الشابتر في 3 جمل واستخرج الفكرة الرئيسة.']
+    ]
+  };
+
+  // اقتراحات أوقات المذاكرة حسب ساعات النشاط
+  const ACTIVE_TIMES = {
+    morning: { label: 'صباحي', start: '08:00', peak: 'من 8 إلى 11 صباحاً', light: 'بعد العصر' },
+    afternoon: { label: 'بعد الظهر', start: '15:30', peak: 'من 4 إلى 7 مساءً', light: 'بعد العشاء' },
+    evening: { label: 'مسائي', start: '19:30', peak: 'من 7:30 إلى 10:30 مساءً', light: 'قبل النوم بساعة' }
+  };
+
+  root.StudyData = {
+    STUDY_PLAN, LEVEL_NAMES, SUGGESTED_CHAPTERS, TECHNIQUES, TECHNIQUES_BY_DIFFICULTY, TECHNIQUES_BY_TYPE,
+    BREAK_PLANS, TYPE_TIPS, SOURCE_TIPS, TYPE_LABELS, DIFFICULTY_LABELS, SOURCE_LABELS,
+    QUESTION_TYPES, QUESTION_STATUS, QUESTION_TEMPLATES, ACTIVE_TIMES
+  };
+})(typeof self !== 'undefined' ? self : this);
+
+</script>
+  <script>
+/* =========================================================================
+   question-bank.js — بنك أسئلة مكتوبة لمقررات محددة، مع الإجابات
+   PHYS 103: مبني على شرائح المحاضرة (Serway — الفصول 2، 3، 4، 5، 7، 8)
+   الأسئلة بالإنجليزية لأنها لغة الاختبار. lecture: true = مسألة من شرائح المحاضرة
+   كل الإجابات العددية محسوبة بـ g = 9.80 m/s²
+   ========================================================================= */
+(function (root) {
+  'use strict';
+  const D = root.StudyData;
+
+  // شابترات فيزياء (1) كما في شرائح المحاضرة
+  // sessions: جلسات مقترحة حسب حجم الشابتر في الشرائح (المتجهات والطاقة المحافظة أقصر، قوانين نيوتن أطول)
+  const PHYS103_CHAPTERS = [
+    { title: 'Ch 2 — Motion in One Dimension', bank: 'PHYS103-2', sessions: 2,
+      topics: ['Displacement vs distance', 'Average velocity and speed', 'Instantaneous velocity', 'Acceleration', 'Constant acceleration equations', 'Free fall'] },
+    { title: 'Ch 3 — Vectors', bank: 'PHYS103-3', sessions: 1,
+      topics: ['Cartesian and polar coordinates', 'Scalars and vectors', 'Adding and subtracting vectors', 'Components and unit vectors'] },
+    { title: 'Ch 4 — Motion in Two Dimensions', bank: 'PHYS103-4', sessions: 2,
+      topics: ['Position, velocity and acceleration vectors', '2D motion with constant acceleration', 'Projectile motion', 'Uniform circular motion', 'Tangential and radial acceleration'] },
+    { title: 'Ch 5 — The Laws of Motion', bank: 'PHYS103-5', sessions: 3,
+      topics: ['Contact and field forces', 'Newton\'s first law', 'Mass', 'Newton\'s second law', 'Weight', 'Newton\'s third law', 'Equilibrium and net force models', 'Friction'] },
+    { title: 'Ch 7 — Energy of a System', bank: 'PHYS103-7', sessions: 2,
+      topics: ['System and environment', 'Work by a constant force', 'Scalar product', 'Work by a varying force (springs)', 'Work–kinetic energy theorem', 'Potential energy'] },
+    { title: 'Ch 8 — Conservation of Energy', bank: 'PHYS103-8', sessions: 1,
+      topics: ['Nonisolated system', 'Isolated system', 'Conservation of mechanical energy'] }
+  ];
+
+  const QUESTION_BANK = {
+    'PHYS103-2': [
+      { type: 'problem', lecture: true, text: 'A particle moves according to x = 10t² (x in m, t in s). Find the average velocity (a) from t = 2.00 s to 3.00 s and (b) from t = 2.00 s to 2.10 s.', answer: '(a) 50.0 m/s  (b) 41.0 m/s — the second value approaches the instantaneous velocity at t = 2 s (40 m/s).' },
+      { type: 'problem', lecture: true, text: 'An object moves along x according to x = 3t² − 2t + 3. Find (a) the average speed between t = 2 s and 3 s, (b) the instantaneous speed at t = 2 s and t = 3 s, (c) the average acceleration between 2 s and 3 s, (d) the instantaneous acceleration, (e) when the object is at rest.', answer: '(a) 13 m/s  (b) v = 6t − 2 → 10 m/s and 16 m/s  (c) 6 m/s²  (d) 6 m/s² at both times  (e) t = 1/3 s ≈ 0.333 s' },
+      { type: 'problem', lecture: true, text: 'An electron accelerates uniformly from 2 × 10⁴ m/s to 6 × 10⁶ m/s over 1.50 cm. Find (a) the time interval and (b) the acceleration.', answer: '(a) t = 2Δx/(vi + vf) = 4.98 × 10⁻⁹ s  (b) a = (vf² − vi²)/(2Δx) = 1.20 × 10¹⁵ m/s²' },
+      { type: 'problem', lecture: true, text: 'A truck covers 40.0 m in 8.50 s while smoothly slowing down to 2.80 m/s. Find (a) its original speed and (b) its acceleration.', answer: '(a) vi = 2Δx/t − vf = 6.61 m/s  (b) a = (vf − vi)/t = −0.448 m/s²' },
+      { type: 'problem', text: 'A particle moves along x with x = 4t² − 3t + 2 (m). Find (a) the average velocity from t = 1 s to 3 s, (b) the velocity at t = 2 s, (c) the acceleration, (d) when the particle is momentarily at rest.', answer: '(a) (29 − 3)/2 = 13 m/s  (b) v = 8t − 3 = 13 m/s  (c) 8 m/s² (constant)  (d) t = 0.375 s' },
+      { type: 'problem', text: 'A car moving at 30.0 m/s brakes with a constant deceleration of 6.00 m/s². Find the stopping time and the stopping distance.', answer: 't = 5.00 s,  d = v²/(2a) = 75.0 m' },
+      { type: 'problem', text: 'A ball is thrown straight up at 19.6 m/s. Find (a) the time to reach maximum height, (b) the maximum height, (c) the total time in the air.', answer: '(a) 2.00 s  (b) 19.6 m  (c) 4.00 s' },
+      { type: 'problem', text: 'A stone is dropped from rest from a 45.0 m cliff. How long does it take to hit the ground, and how fast is it moving then?', answer: 't = √(2h/g) = 3.03 s,  v = gt = 29.7 m/s' },
+      { type: 'mcq', text: 'A runner completes one 400 m lap and returns to the starting point in 80 s. The average velocity is: (a) 5 m/s  (b) 0  (c) 80 m/s  (d) 400 m/s', answer: '(b) 0 — displacement is zero. The average SPEED is 5 m/s.' },
+      { type: 'mcq', text: 'At the highest point of a ball thrown straight up: (a) v = 0 and a = 0  (b) v = 0 and a = 9.80 m/s² downward  (c) v is maximum  (d) a = 0 only', answer: '(b)' },
+      { type: 'tf', text: 'True or false: displacement and distance traveled are always equal.', answer: 'False — they are equal only for straight-line motion in one direction. Distance is a scalar (always positive); displacement is a vector.' },
+      { type: 'tf', text: 'True or false: an object can have zero velocity and non-zero acceleration at the same instant.', answer: 'True — e.g. a ball at the top of its flight: v = 0, a = g downward.' },
+      { type: 'essay', text: 'Explain the difference between average speed and average velocity, with an example where one is zero and the other is not.', answer: 'Average velocity = Δx/Δt (vector, can be ±). Average speed = total distance/Δt (scalar, always ≥ 0). A round trip gives zero average velocity but non-zero average speed.' },
+      { type: 'essay', text: 'Write the four equations for a particle under constant acceleration and state which variable each one does not contain.', answer: 'vf = vi + at (no x) · xf = xi + ½(vi + vf)t (no a) · xf = xi + vi t + ½at² (no vf) · vf² = vi² + 2a(xf − xi) (no t)' }
+    ],
+    'PHYS103-3': [
+      { type: 'problem', lecture: true, text: 'The rectangular coordinates of a point are (2, y) and its polar coordinates are (r, 30°). Find y and r.', answer: 'y = 2 tan 30° = 1.15,  r = 2/cos 30° = 2.31' },
+      { type: 'problem', lecture: true, text: 'The polar coordinates of a point are (4.30 cm, 214°). Find its Cartesian coordinates.', answer: 'x = 4.30 cos 214° = −3.56 cm,  y = 4.30 sin 214° = −2.40 cm' },
+      { type: 'problem', text: 'Find the polar coordinates of the point (x, y) = (−4.00, 3.00) m.', answer: 'r = 5.00 m,  θ = 143° (second quadrant — not −36.9°)' },
+      { type: 'problem', text: 'Convert the polar coordinates (6.00 m, 240°) to Cartesian coordinates.', answer: 'x = −3.00 m,  y = −5.20 m' },
+      { type: 'problem', text: 'Given A = 3î − 4ĵ and B = −2î + 6ĵ, find A + B and A − B with their magnitudes, and the direction of A + B.', answer: 'A + B = î + 2ĵ, |A + B| = 2.24, direction 63.4° · A − B = 5î − 10ĵ, |A − B| = 11.2' },
+      { type: 'problem', text: 'A hiker walks 3.00 km east and then 4.00 km at 30.0° north of east. Find the magnitude and direction of the resultant displacement.', answer: 'Rx = 6.46 km, Ry = 2.00 km → R = 6.77 km at 17.2° north of east' },
+      { type: 'mcq', text: 'Which of the following is a vector quantity? (a) mass  (b) speed  (c) displacement  (d) time', answer: '(c) displacement' },
+      { type: 'mcq', text: '|A| = 5 units and |B| = 3 units. Which value can |A + B| have? (a) 1  (b) 5  (c) 9  (d) 10', answer: '(b) 5 — the magnitude of the sum lies between 2 and 8.' },
+      { type: 'tf', text: 'True or false: the magnitude of a vector can be negative.', answer: 'False — the magnitude is always ≥ 0; only components can be negative.' },
+      { type: 'tf', text: 'True or false: a component of a vector can be larger than the magnitude of the vector.', answer: 'False — |Ax| = A|cos θ| ≤ A.' },
+      { type: 'essay', text: 'For the point (−3.50, −2.50) m, a calculator gives tan⁻¹(y/x) = 35.5°. Explain why the correct angle is 216° and how to find it.', answer: 'Both x and y are negative, so the point is in the third quadrant; add 180°: 35.5° + 180° = 216°. Always check the signs of x and y.' },
+      { type: 'essay', text: 'Define the unit vectors î and ĵ and explain how to write a vector in unit-vector notation.', answer: 'î and ĵ are dimensionless vectors of magnitude 1 along +x and +y. A = Ax î + Ay ĵ, with Ax = A cos θ and Ay = A sin θ.' }
+    ],
+    'PHYS103-4': [
+      { type: 'problem', lecture: true, text: 'A particle\'s position is x = at + b, y = ct² + d with a = 1 m/s, b = 1 m, c = 0.125 m/s², d = 1 m. Find (a) the average velocity from t = 2 s to 4 s and (b) the velocity and speed at t = 2 s.', answer: '(a) (1.00î + 0.750ĵ) m/s  (b) v = (1.00î + 0.500ĵ) m/s, speed 1.12 m/s' },
+      { type: 'problem', lecture: true, text: 'A projectile is fired so that its horizontal range equals three times its maximum height. What is the angle of projection?', answer: 'R/H = 4/tan θ = 3 → tan θ = 4/3 → θ = 53.1°' },
+      { type: 'problem', text: 'A projectile is launched at 25.0 m/s at 40.0° above the horizontal on level ground. Find the range, maximum height and time of flight.', answer: 'R = v² sin 2θ / g = 62.8 m,  H = 13.2 m,  t = 3.28 s' },
+      { type: 'problem', text: 'A ball rolls off a 1.25 m high table at 3.00 m/s. Find the time to reach the floor, the horizontal distance, and the speed on impact.', answer: 't = 0.505 s,  x = 1.52 m,  v = 5.79 m/s' },
+      { type: 'problem', text: 'r(t) = (2t² î + 3t ĵ) m. Find the velocity, speed and acceleration at t = 2.00 s.', answer: 'v = 4t î + 3ĵ = (8.00î + 3.00ĵ) m/s, speed 8.54 m/s,  a = 4.00î m/s² (constant)' },
+      { type: 'problem', text: 'A car goes around a circle of radius 50.0 m at a constant 15.0 m/s. Find the centripetal acceleration, the period and the angular speed.', answer: 'ac = v²/r = 4.50 m/s²,  T = 2πr/v = 20.9 s,  ω = v/r = 0.300 rad/s' },
+      { type: 'problem', text: 'A particle on a circle of radius 2.00 m has speed 4.00 m/s and is speeding up at 3.00 m/s². Find the radial, tangential and total acceleration.', answer: 'ar = 8.00 m/s², at = 3.00 m/s², a = 8.54 m/s² at 20.6° from the radius' },
+      { type: 'mcq', text: 'At the top of a projectile\'s path (no air resistance): (a) v = 0  (b) a = 0  (c) vy = 0 and vx is unchanged  (d) vx = 0', answer: '(c)' },
+      { type: 'mcq', text: 'On level ground, which launch angle gives the maximum range? (a) 30°  (b) 45°  (c) 60°  (d) 90°', answer: '(b) 45° — and complementary angles (30° and 60°) give equal ranges.' },
+      { type: 'tf', text: 'True or false: in uniform circular motion the acceleration is zero because the speed is constant.', answer: 'False — the direction of velocity changes, so there is a centripetal acceleration v²/r toward the center.' },
+      { type: 'tf', text: 'True or false: the horizontal and vertical motions of a projectile are independent.', answer: 'True — constant velocity horizontally, constant acceleration (−g) vertically, linked only by time t.' },
+      { type: 'essay', text: 'Explain the difference between tangential and radial acceleration, and write the total acceleration.', answer: 'at = d|v|/dt changes the speed (parallel to v); ar = −v²/r changes the direction (toward the center). a = at + ar, |a| = √(at² + ar²).' }
+    ],
+    'PHYS103-5': [
+      { type: 'problem', lecture: true, text: 'A 3.00 kg object has acceleration a = (2î + 5ĵ) m/s². Find the resultant force and its magnitude.', answer: 'F = ma = (6î + 15ĵ) N,  |F| = 16.2 N' },
+      { type: 'problem', lecture: true, text: 'F1 = (−6î − 4ĵ) N and F2 = (−3î + 7ĵ) N act on a 2.00 kg particle starting from rest. Find (a) the velocity components at t = 10 s, (b) the direction of motion, (c) the displacement in the first 10 s.', answer: 'a = (−4.5î + 1.5ĵ) m/s² → (a) v = (−45î + 15ĵ) m/s  (b) 162° from +x  (c) Δr = (−225î + 75ĵ) m' },
+      { type: 'problem', lecture: true, text: 'A 5.00 kg object on a frictionless table is connected over a pulley to a hanging 9.00 kg object. Find the acceleration and the tension.', answer: 'a = m2 g/(m1 + m2) = 6.30 m/s²,  T = m1 a = 31.5 N' },
+      { type: 'problem', lecture: true, text: 'A hanging m1 = 2.00 kg is connected over a pulley to m2 = 6.00 kg on a frictionless 55.0° incline. Find the acceleration, the tension, and the speed after 2.00 s from rest.', answer: 'a = (m2 g sin θ − m1 g)/(m1 + m2) = 3.57 m/s² (m2 slides down),  T = m1(g + a) = 26.7 N,  v = 7.14 m/s' },
+      { type: 'problem', text: 'Atwood machine: m1 = 3.00 kg and m2 = 5.00 kg. Find the acceleration and the tension.', answer: 'a = (m2 − m1)g/(m1 + m2) = 2.45 m/s²,  T = 2m1m2g/(m1 + m2) = 36.8 N' },
+      { type: 'problem', text: 'A 5.00 kg block slides down a frictionless 30.0° incline. Find its acceleration and the normal force.', answer: 'a = g sin θ = 4.90 m/s²,  n = mg cos θ = 42.4 N' },
+      { type: 'problem', text: 'A 4.00 kg block on a table (μk = 0.200) is connected over a pulley to a hanging 2.00 kg block. Find the acceleration and the tension.', answer: 'a = (m2 g − μk m1 g)/(m1 + m2) = 1.96 m/s²,  T = 15.7 N' },
+      { type: 'problem', text: 'A 100 N traffic light hangs from two cables making 30.0° and 60.0° with the horizontal. Find the tensions.', answer: 'T1 (30°) = 50.0 N,  T2 (60°) = 86.6 N' },
+      { type: 'problem', text: 'A hockey puck given 20.0 m/s slides 115 m before stopping. Find the coefficient of kinetic friction.', answer: 'a = v²/(2d) = 1.74 m/s² → μk = a/g = 0.177' },
+      { type: 'mcq', text: 'A 60.0 kg person stands on a scale in an elevator accelerating upward at 2.00 m/s². The scale reads: (a) 468 N  (b) 588 N  (c) 708 N  (d) 120 N', answer: '(c) n = m(g + a) = 708 N' },
+      { type: 'mcq', text: 'The reaction force (Newton\'s third law) to the Earth\'s gravitational force on a book resting on a table is: (a) the normal force on the book  (b) the book\'s gravitational pull on the Earth  (c) the table\'s weight  (d) friction', answer: '(b) — action–reaction forces act on different objects.' },
+      { type: 'tf', text: 'True or false: an object moving at constant velocity has zero net force acting on it.', answer: 'True — Newton\'s first law (particle in equilibrium).' },
+      { type: 'tf', text: 'True or false: the static friction force always equals μs n.', answer: 'False — fs ≤ μs n; it equals μs n only when motion is about to start.' },
+      { type: 'essay', text: 'Show that the coefficient of static friction equals tan θc, where θc is the angle at which a block on an incline just starts to slide.', answer: 'At slipping: mg sin θc = fs,max = μs n and n = mg cos θc → μs = tan θc.' },
+      { type: 'essay', text: 'Distinguish between mass and weight, and between contact forces and field forces, with examples.', answer: 'Mass: resistance to change in velocity (kg, same everywhere). Weight: Fg = mg (N, depends on g). Contact: pushing, tension, friction. Field: gravity, electric, magnetic.' }
+    ],
+    'PHYS103-7': [
+      { type: 'problem', lecture: true, text: 'A 2.50 kg block is pushed 2.20 m on a frictionless table by F = 16.0 N directed 25.0° below the horizontal. Find the work done by (a) F, (b) the normal force, (c) gravity, (d) the net force.', answer: '(a) Fd cos 25° = 31.9 J  (b) 0  (c) 0  (d) 31.9 J' },
+      { type: 'problem', lecture: true, text: 'F = (6î − 2ĵ) N acts on a particle that undergoes Δr = (3î + ĵ) m. Find the work and the angle between F and Δr.', answer: 'W = F·Δr = 16.0 J,  θ = 36.9°' },
+      { type: 'problem', lecture: true, text: 'A 3.00 kg object has velocity (6î − ĵ) m/s. (a) What is its kinetic energy? (b) What net work is done if its velocity changes to (8î + 4ĵ) m/s?', answer: '(a) K = ½mv² = 55.5 J  (b) W = ΔK = 120 − 55.5 = 64.5 J' },
+      { type: 'problem', text: 'A 50.0 N force pulls a box 8.00 m along the floor at 37.0° above the horizontal. How much work does it do?', answer: 'W = Fd cos θ = 319 J' },
+      { type: 'problem', text: 'A = 4î − 3ĵ and B = 2î + 5ĵ. Find A·B and the angle between them.', answer: 'A·B = 8 − 15 = −7,  θ = 105°' },
+      { type: 'problem', text: 'A 0.500 kg mass hung from a spring stretches it 2.00 cm. Find k, then the work done by a k = 400 N/m spring as it returns from 10.0 cm compression to equilibrium.', answer: 'k = mg/x = 245 N/m ·  Ws = ½kx² = 2.00 J' },
+      { type: 'problem', text: 'A 2.00 kg block at rest is pulled 3.00 m by a 12.0 N horizontal force on a frictionless surface. Find the work and the final speed.', answer: 'W = 36.0 J → v = √(2W/m) = 6.00 m/s' },
+      { type: 'problem', text: 'How much does the kinetic energy of a 1500 kg car change when it speeds up from 10.0 m/s to 20.0 m/s?', answer: 'ΔK = ½m(vf² − vi²) = 2.25 × 10⁵ J' },
+      { type: 'mcq', text: 'A block slides across a horizontal floor. The work done by the normal force is: (a) positive  (b) negative  (c) zero  (d) equal to mgd', answer: '(c) zero — the normal force is perpendicular to the displacement.' },
+      { type: 'mcq', text: 'If the speed of an object doubles, its kinetic energy: (a) doubles  (b) triples  (c) quadruples  (d) stays the same', answer: '(c) quadruples — K ∝ v²' },
+      { type: 'tf', text: 'True or false: work can be negative.', answer: 'True — when the force has a component opposite the displacement (e.g. kinetic friction); energy leaves the system.' },
+      { type: 'tf', text: 'True or false: the centripetal force does positive work in uniform circular motion.', answer: 'False — it is perpendicular to the velocity, so W = 0 and the speed stays constant.' },
+      { type: 'essay', text: 'Explain how to find the work done by a varying force from an F–x graph, and derive the work done by a spring.', answer: 'W = area under the F–x curve (∫F dx). For a spring F = −kx: Ws = ½kxi² − ½kxf².' },
+      { type: 'essay', text: 'State the work–kinetic energy theorem and explain why work is described as an energy transfer across the system boundary.', answer: 'Wnet = ΔK. Positive W transfers energy into the system; negative W transfers energy out of it.' }
+    ],
+    'PHYS103-8': [
+      { type: 'problem', lecture: true, text: 'A bead slides without friction around a loop-the-loop of radius R, released from rest at h = 3.50R. (a) What is its speed at the top of the loop (point A)? (b) What is the normal force there if its mass is 5.00 g?', answer: '(a) v = √(2g(3.5R − 2R)) = √(3gR)  (b) n = mv²/R − mg = 2mg = 0.098 N, downward' },
+      { type: 'problem', lecture: true, text: 'A 200 g block is released from rest at the rim (point A) of a frictionless hemispherical bowl of radius 30.0 cm. Find (a) the potential energy at A relative to the bottom B, (b) the kinetic energy at B, (c) the speed at B.', answer: '(a) mgR = 0.588 J  (b) 0.588 J  (c) v = √(2gR) = 2.42 m/s' },
+      { type: 'problem', text: 'A ball is dropped from 20.0 m. Using conservation of energy, find its speed 5.00 m above the ground.', answer: 'v = √(2g·15.0) = 17.1 m/s' },
+      { type: 'problem', text: 'A block slides from rest down a frictionless track from a height of 5.00 m. Find its speed at the bottom and at 2.00 m above the bottom.', answer: '9.90 m/s and 7.67 m/s' },
+      { type: 'problem', text: 'A spring (k = 500 N/m) compressed 0.200 m launches a 0.400 kg block on a frictionless surface. Find the launch speed and how high the block rises up a frictionless ramp.', answer: '½kx² = 10.0 J → v = 7.07 m/s,  h = 10.0/(mg) = 2.55 m' },
+      { type: 'problem', text: 'A 2.00 m pendulum is released from rest at 60.0° from the vertical. Find the speed at the lowest point.', answer: 'h = L(1 − cos 60°) = 1.00 m → v = √(2gh) = 4.43 m/s' },
+      { type: 'problem', text: 'A 0.100 kg block released from h = 3R slides around a frictionless loop of radius R = 0.500 m. Find the speed and the normal force at the top of the loop.', answer: 'v = √(2g(3R − 2R)) = 3.13 m/s,  n = m(v²/R − g) = 0.980 N' },
+      { type: 'mcq', text: 'For an isolated system with only conservative forces: (a) K is constant  (b) U is constant  (c) K + U is constant  (d) nothing is conserved', answer: '(c) mechanical energy is conserved.' },
+      { type: 'mcq', text: 'Two identical balls are thrown from the same height at the same speed, one straight up and one straight down. On reaching the ground: (a) the upward one is faster  (b) the downward one is faster  (c) same speed  (d) it depends on the mass', answer: '(c) same speed — same initial K and same drop in U.' },
+      { type: 'tf', text: 'True or false: in an isolated system, kinetic energy is always conserved.', answer: 'False — the total mechanical energy is conserved; K and U convert into each other.' },
+      { type: 'tf', text: 'True or false: the choice of reference level for gravitational potential energy changes ΔU.', answer: 'False — only differences in U matter; the reference level cancels.' },
+      { type: 'essay', text: 'Explain the difference between an isolated system and a nonisolated system, and write the conservation of energy equation for each.', answer: 'Nonisolated: energy crosses the boundary, ΔEsystem = ΣT (e.g. W = ΔK). Isolated: nothing crosses, ΔK + ΔU = 0 (conservative forces only).' },
+      { type: 'essay', text: 'Solve "ball in free fall" (Example 8.1) twice: with the ball + Earth as the system, then with the ball alone as the system. Why do both give the same answer?', answer: 'Ball + Earth (isolated): mgh = mgy + ½mv². Ball alone (nonisolated): W_gravity = mg(h − y) = ½mv². Both give v = √(2g(h − y)); the gravitational work equals −ΔU.' }
+    ]
+  };
+
+  D.SUGGESTED_CHAPTERS['PHYS 103'] = PHYS103_CHAPTERS;
+  D.QUESTION_BANK = QUESTION_BANK;
+  // رقم نسخة محتوى المقرر: يظهر للمستخدم عرض تحديث الشابترات إذا كانت نسخته أقدم
+  D.COURSE_CONTENT_VERSION = { 'PHYS 103': 2 };
+})(typeof self !== 'undefined' ? self : this);
+
+</script>
+  <script>
+/* =========================================================================
+   scheduler.js — منطق توليد الجدول الدراسي (دوال نقية بلا واجهة)
+   يعمل في المتصفح (window.Scheduler) وفي Node للاختبارات (module.exports)
+   ========================================================================= */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.Scheduler = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  // ===== أدوات التاريخ: نتعامل مع التواريخ كنص YYYY-MM-DD لتجنب مشاكل المناطق الزمنية =====
+  const DAY_MS = 86400000;
+
+  function parseDate(str) {
+    if (typeof str !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
+    const [y, m, d] = str.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    if (isNaN(dt) || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+    return dt;
+  }
+  function formatDate(dt) { return dt.toISOString().slice(0, 10); }
+  function addDays(str, n) {
+    const d = parseDate(str);
+    d.setUTCDate(d.getUTCDate() + n);
+    return formatDate(d);
+  }
+  // عدد الأيام من a إلى b (موجب إذا كان b بعد a)
+  function diffDays(a, b) { return Math.round((parseDate(b) - parseDate(a)) / DAY_MS); }
+  function todayLocal(now) {
+    const d = now || new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  function weekday(str) { return parseDate(str).getUTCDay(); } // 0 = الأحد
+  function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+
+  // ===== الثوابت =====
+  const DIFFICULTY = {
+    easy:   { rank: 1, sessionsPerChapter: 1, pagesPerSession: 20 },
+    medium: { rank: 2, sessionsPerChapter: 2, pagesPerSession: 12 },
+    hard:   { rank: 3, sessionsPerChapter: 3, pagesPerSession: 8 }
+  };
+
+  const DEFAULT_SETTINGS = {
+    dailyHours: 4,        // ساعات المذاكرة اليومية
+    sessionMinutes: 50,   // مدة الجلسة
+    breakMinutes: 10,     // الراحة بين الجلسات
+    reviewDays: 2,        // أيام المراجعة النهائية (يومان على الأقل)
+    restDays: [],         // أيام الراحة الأسبوعية (0 = الأحد ... 6 = السبت)
+    spacedReview: true    // ملء الوقت الفارغ بمراجعات متباعدة
+  };
+
+  // صيغة العدد العربية للجلسات: جلسة واحدة، جلستان، 3–10 جلسات، 11+ جلسة
+  function sessionsWord(n) {
+    if (n === 1) return 'جلسة واحدة';
+    if (n === 2) return 'جلستين';
+    return n + (n >= 3 && n <= 10 ? ' جلسات' : ' جلسة');
+  }
+
+  function W(level, message, subjectId) { return { level, message, subjectId: subjectId || null }; }
+
+  function makeIdGen() {
+    let n = 0;
+    const base = Date.now().toString(36);
+    return () => 's_' + base + '_' + (n++).toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  // تنظيف الإعدادات وتطبيق القيم الافتراضية
+  function normalizeSettings(raw, warnings) {
+    const s = Object.assign({}, DEFAULT_SETTINGS, raw || {});
+    let hours = Number(s.dailyHours);
+    if (!isFinite(hours) || hours <= 0) {
+      warnings.push(W('warn', 'لم تُدخل ساعات المذاكرة اليومية أو أدخلت صفراً، فاستُخدمت 4 ساعات افتراضياً. عدّلها من إعدادات الجدول.'));
+      hours = 4;
+    }
+    hours = Math.min(hours, 16);
+    const dailyMinutes = Math.round(hours * 60);
+    let session = clamp(Math.round(Number(s.sessionMinutes) || 50), 15, 180);
+    const brk = clamp(Math.round(Number(s.breakMinutes)), 0, 60) || 0;
+    if (session > dailyMinutes) session = dailyMinutes;
+    const slotsPerDay = Math.max(1, Math.floor((dailyMinutes + brk) / (session + brk)));
+
+    let restDays = Array.isArray(s.restDays)
+      ? [...new Set(s.restDays.map(Number).filter((d) => d >= 0 && d <= 6))] : [];
+    if (restDays.length >= 7) {
+      warnings.push(W('warn', 'اخترت كل أيام الأسبوع أيام راحة، فتم تجاهل أيام الراحة.'));
+      restDays = [];
+    }
+    const reviewDays = clamp(Math.round(Number(s.reviewDays) || 2), 2, 7);
+    return {
+      dailyHours: hours, dailyMinutes, sessionMinutes: session, breakMinutes: brk,
+      slotsPerDay, restDays, reviewDays, spacedReview: s.spacedReview !== false
+    };
+  }
+
+  // الشابترات المقررة في الاختبار فقط (inExam === false تعني خارج الاختبار)
+  function examChapters(subject) {
+    return (Array.isArray(subject && subject.chapters) ? subject.chapters : []).filter((c) => c && c.inExam !== false);
+  }
+
+  // عدد جلسات المذاكرة التي يحتاجها الشابتر حسب الصفحات أو الصعوبة
+  // الأولوية: عدد الجلسات الذي حددته الطالبة، ثم الصفحات، ثم الصعوبة
+  function partsFor(chapter, difficulty) {
+    const cfg = DIFFICULTY[difficulty] || DIFFICULTY.medium;
+    const manual = Math.round(Number(chapter && chapter.sessions) || 0);
+    if (manual > 0) return clamp(manual, 1, 10);
+    const pages = Number(chapter && chapter.pages) || 0;
+    if (pages > 0) return clamp(Math.ceil(pages / cfg.pagesPerSession), 1, 6);
+    return cfg.sessionsPerChapter;
+  }
+
+  // ما تبقى من كل شابتر بعد احتساب الجلسات المنجزة سابقاً
+  function chapterNeeds(subject, history) {
+    const chapters = examChapters(subject);
+    const needs = [];
+    for (const ch of chapters) {
+      if (ch.done) continue;
+      const doneStudy = history.filter((s) => s.done && s.kind === 'study' &&
+        s.subjectId === subject.id && Array.isArray(s.chapterIds) && s.chapterIds.includes(ch.id));
+      // إذا أُنجز الجزء الأخير من الشابتر في جدول سابق فهو منتهٍ
+      if (doneStudy.some((s) => s.part === s.parts)) continue;
+      const need = partsFor(ch, subject.difficulty);
+      const doneParts = Math.min(doneStudy.length, need - 1);
+      needs.push({ chapterId: ch.id, need, doneParts, remaining: need - doneParts });
+    }
+    return needs;
+  }
+
+  // تحويل الاحتياج إلى وحدات جلسات، مع ضغطها إلى target جلسة إذا لم يتسع الوقت
+  function buildUnits(needs, target) {
+    const total = needs.reduce((a, n) => a + n.remaining, 0);
+    const units = [];
+    if (target == null || target >= total) {
+      for (const n of needs) {
+        for (let p = n.doneParts + 1; p <= n.need; p++) {
+          units.push({ chapterIds: [n.chapterId], part: p, parts: n.need });
+        }
+      }
+      return units;
+    }
+    if (target <= 0) return units;
+    if (needs.length <= target) {
+      // جلسة واحدة لكل شابتر على الأقل، والباقي للشابترات الأطول
+      const alloc = needs.map(() => 1);
+      let extra = target - needs.length;
+      while (extra > 0) {
+        let best = -1, bestGap = 0;
+        needs.forEach((n, i) => {
+          const gap = n.remaining - alloc[i];
+          if (gap > bestGap) { bestGap = gap; best = i; }
+        });
+        if (best < 0) break;
+        alloc[best]++; extra--;
+      }
+      needs.forEach((n, i) => {
+        const parts = n.doneParts + alloc[i];
+        for (let p = n.doneParts + 1; p <= parts; p++) {
+          units.push({ chapterIds: [n.chapterId], part: p, parts, compressed: true });
+        }
+      });
+      return units;
+    }
+    // الشابترات أكثر من الجلسات المتاحة: دمج عدة شابترات في جلسة واحدة
+    const base = Math.floor(needs.length / target);
+    let rem = needs.length % target, i = 0;
+    for (let g = 0; g < target; g++) {
+      const size = base + (rem-- > 0 ? 1 : 0);
+      const ids = needs.slice(i, i + size).map((n) => n.chapterId);
+      i += size;
+      units.push({ chapterIds: ids, part: 1, parts: 1, compressed: true, merged: ids.length > 1 });
+    }
+    return units;
+  }
+
+  function examUrgency(daysLeft) {
+    if (daysLeft == null || isNaN(daysLeft)) return 'none';
+    if (daysLeft < 0) return 'past';
+    if (daysLeft < 7) return 'red';
+    if (daysLeft <= 14) return 'orange';
+    return 'green';
+  }
+
+  // ======================= الخوارزمية الرئيسية =======================
+  function generateSchedule(input) {
+    input = input || {};
+    const warnings = [];
+    const today = input.today || todayLocal();
+    const cfg = normalizeSettings(input.settings, warnings);
+    const subjects = Array.isArray(input.subjects) ? input.subjects : [];
+    const history = (input.history || []).filter((s) => s && s.done);
+    const nextId = input.idGen || makeIdGen();
+
+    const emptyResult = () => ({ sessions: [], warnings, meta: { slotsPerDay: cfg.slotsPerDay, settings: cfg, today, days: 0 } });
+
+    // ---- 1) تجهيز خطة لكل مادة مع التحقق من حالات الحافة ----
+    const plans = [];
+    for (const subj of subjects) {
+      const name = subj.name || 'مادة بلا اسم';
+      if (!subj.examDate) {
+        warnings.push(W('info', `«${name}»: لم يُحدَّد تاريخ الاختبار بعد، لذلك لم تدخل الجدول. أضف التاريخ من تبويب المواد.`, subj.id));
+        continue;
+      }
+      if (!parseDate(subj.examDate)) {
+        warnings.push(W('warn', `«${name}»: تاريخ الاختبار غير صالح (${subj.examDate}).`, subj.id));
+        continue;
+      }
+      const daysLeft = diffDays(today, subj.examDate);
+      if (daysLeft < 0) {
+        warnings.push(W('warn', `اختبار «${name}» كان بتاريخ ${subj.examDate} وقد مضى، فاستُبعدت المادة من الجدول. حدّث التاريخ إن كان لديك اختبار قادم فيها.`, subj.id));
+        continue;
+      }
+      const allChapters = Array.isArray(subj.chapters) ? subj.chapters : [];
+      const chapters = examChapters(subj);
+      const needs = chapterNeeds(subj, history);
+      if (allChapters.length && !chapters.length) {
+        warnings.push(W('warn', `«${name}»: لم تحدد أي شابتر مقرر في الاختبار، فجُدولت لها مراجعة عامة فقط. حدّد الشابترات المقررة من بطاقة المادة.`, subj.id));
+      } else if (!chapters.length) {
+        warnings.push(W('warn', `«${name}» بلا شابترات، فجُدولت لها مراجعة عامة فقط. أضف الشابترات ليتوزع المنهج على الأيام.`, subj.id));
+      } else if (!needs.length) {
+        warnings.push(W('info', `كل شابترات «${name}» منجزة، فجُدولت لها مراجعة فقط.`, subj.id));
+      }
+      plans.push({
+        subj, id: subj.id, name, examDate: subj.examDate, daysLeft, needs,
+        rank: (DIFFICULTY[subj.difficulty] || DIFFICULTY.medium).rank,
+        chapters, units: [], studyDays: [], reviewDays: [], intensive: false
+      });
+    }
+    if (!plans.length) {
+      warnings.push(W('info', 'لا توجد اختبارات قادمة بتواريخ صالحة، فلم يُنشأ جدول. أدخل تواريخ الاختبارات أولاً.'));
+      return emptyResult();
+    }
+    plans.sort((a, b) => a.examDate.localeCompare(b.examDate) || b.rank - a.rank);
+
+    // ---- 2) كشف تعارض المواعيد ----
+    const byDate = {};
+    plans.forEach((p) => { (byDate[p.examDate] = byDate[p.examDate] || []).push(p); });
+    const examDates = Object.keys(byDate).sort();
+    examDates.forEach((d, i) => {
+      if (byDate[d].length > 1) {
+        warnings.push(W('warn', `تعارض مواعيد: ${byDate[d].map((p) => '«' + p.name + '»').join(' و ')} في يوم واحد (${d}). تأكد من الموعد؛ الجدول يقسم وقت المراجعة بينها.`));
+      }
+      if (i > 0 && diffDays(examDates[i - 1], d) === 1) {
+        warnings.push(W('info', `اختباران متتاليان (${examDates[i - 1]} ثم ${d}): أنهِ مذاكرة المادة الثانية مبكراً قدر الإمكان.`));
+      }
+    });
+
+    // ---- 3) الأيام والسعة اليومية ----
+    const lastExam = examDates[examDates.length - 1];
+    const days = [];
+    for (let d = today; d < lastExam || d === today; d = addDays(d, 1)) days.push(d);
+    const cap = {}, used = {}, occupied = {};
+    days.forEach((d) => {
+      cap[d] = cfg.restDays.includes(weekday(d)) ? 0 : cfg.slotsPerDay;
+      occupied[d] = new Set(history.filter((s) => s.date === d).map((s) => s.slot));
+      used[d] = occupied[d].size;
+    });
+    const free = (d, u) => Math.max(0, cap[d] - (u || used)[d]);
+
+    // ---- 4) نافذة المذاكرة ونافذة المراجعة لكل مادة ----
+    for (const p of plans) {
+      if (p.daysLeft === 0) { p.today = true; continue; }
+      const windowDays = days.filter((d) => d < p.examDate);
+      let working = windowDays.filter((d) => free(d) > 0);
+      if (!working.length) {
+        windowDays.forEach((d) => { if (cap[d] === 0) cap[d] = cfg.slotsPerDay; });
+        working = windowDays.filter((d) => free(d) > 0);
+        if (working.length) warnings.push(W('warn', `كل الأيام المتبقية قبل اختبار «${p.name}» أيام راحة، فاستُخدمت للمذاكرة.`, p.id));
+      }
+      const n = working.length;
+      const hasUnits = p.needs.length > 0;
+      let rc;
+      if (!hasUnits) rc = Math.min(cfg.reviewDays, n);
+      else if (n <= 1) { rc = 0; p.intensive = n === 1; }
+      else rc = Math.min(cfg.reviewDays, n - 1);
+      p.reviewDays = working.slice(n - rc);
+      p.studyDays = working.slice(0, n - rc);
+      p.studySet = new Set(p.studyDays);
+      // عند ضيق الوقت يُسمح بإكمال الشابترات في أيام المراجعة قبل اللجوء إلى الدمج
+      p.allDays = working;
+      p.allSet = new Set(working);
+      if (hasUnits && rc < cfg.reviewDays && n > 0) {
+        warnings.push(W('warn', `الوقت المتبقي لاختبار «${p.name}» (${n} ${n === 1 ? 'يوم' : 'أيام'}) لا يكفي لـ ${cfg.reviewDays} أيام مراجعة كاملة، فخُصص ${p.intensive ? 'يوم واحد مكثف للمذاكرة والمراجعة معاً' : rc + ' للمراجعة'}.`, p.id));
+      }
+    }
+
+    // ---- 5) المرحلة الأولى: حجز جلسات المراجعة النهائية ----
+    const placed = []; // { plan, date, kind, unit }
+    for (const d of days) {
+      const reviewers = plans.filter((p) => p.reviewDays.includes(d) || (p.intensive && p.studyDays[0] === d));
+      if (!reviewers.length) continue;
+      const f = free(d);
+      if (f <= 0) continue;
+      const othersNeed = plans.some((p) => !reviewers.includes(p) && p.needs.length && p.studySet && p.studySet.has(d));
+      const intensiveOnly = reviewers.every((p) => p.intensive);
+      let quota = intensiveOnly ? reviewers.length
+        : othersNeed ? Math.max(reviewers.length, Math.ceil(f * 0.6)) : f;
+      quota = Math.min(quota, f);
+      // حد أقصى لكل مادة: نصف اليوم في اليوم الأخير قبل الاختبار، وثلثه في أيام المراجعة الأخرى
+      const perPlanCap = (p) => p.intensive ? 1
+        : d === p.reviewDays[p.reviewDays.length - 1] ? Math.ceil(cfg.slotsPerDay / 2)
+        : Math.max(1, Math.ceil(cfg.slotsPerDay / 3));
+      const got = new Map();
+      let guard = 0;
+      while (quota > 0 && guard++ < 1000) {
+        let progressed = false;
+        for (const p of reviewers) {
+          if (quota <= 0) break;
+          const g = got.get(p) || 0;
+          if (g >= perPlanCap(p)) continue;
+          got.set(p, g + 1);
+          placed.push({ plan: p, date: d, kind: 'review' });
+          used[d]++; quota--; progressed = true;
+        }
+        if (!progressed) break;
+      }
+    }
+    plans.forEach((p) => {
+      if (!p.today && (p.reviewDays.length || p.intensive) && !placed.some((x) => x.plan === p && x.kind === 'review')) {
+        warnings.push(W('warn', `لم يتبقَّ وقت لمراجعة «${p.name}» قبل الاختبار.`, p.id));
+      }
+    });
+
+    // ---- 6) المرحلة الثانية: توزيع الشابترات (الأقرب أجلاً والأكثر ضغطاً أولاً) ----
+    function runStudy(paced) {
+      const u = Object.assign({}, used);
+      const queues = new Map(plans.map((p) => [p, p.units.slice()]));
+      const out = [];
+      for (const d of days) {
+        const setOf = (p) => (paced ? p.studySet : p.allSet);
+        const cands = plans.filter((p) => setOf(p) && setOf(p).has(d));
+        if (!cands.length) continue;
+        const remDays = (p) => Math.max(1, (paced ? p.studyDays : p.allDays).filter((x) => x >= d && free(x, u) > 0).length);
+        const limit = new Map(cands.map((p) => [p, Math.ceil(queues.get(p).length / remDays(p))]));
+        const taken = new Map();
+        let last = null, streak = 0;
+        while (free(d, u) > 0) {
+          let best = null, bestScore = -Infinity;
+          for (const p of cands) {
+            const q = queues.get(p);
+            if (!q.length) continue;
+            const t = taken.get(p) || 0;
+            if (paced && t >= limit.get(p)) continue;
+            // الوضع المتوازن: حصة يومية عادلة مع تنويع المواد.
+            // الوضع الاحتياطي: الأقرب اختباراً أولاً (EDF) لأنه الأمثل لإدخال أكبر قدر قبل المواعيد
+            let score = paced ? q.length / remDays(p) - t : -plans.indexOf(p);
+            if (paced && p === last && streak >= 2) score -= 1; // تنويع المواد خلال اليوم
+            if (score > bestScore + 1e-9) { best = p; bestScore = score; }
+          }
+          if (!best) break;
+          const unit = queues.get(best).shift();
+          out.push({ plan: best, date: d, kind: 'study', unit });
+          u[d]++;
+          taken.set(best, (taken.get(best) || 0) + 1);
+          streak = best === last ? streak + 1 : 1;
+          last = best;
+        }
+      }
+      const leftovers = plans.filter((p) => queues.get(p).length);
+      return { out, leftovers, queues, used: u };
+    }
+
+    // الضغط العادل عند ضيق الوقت: نقلّص الأجزاء أولاً (جلسة لكل شابتر كحد أدنى) في كل المواد المتداخلة،
+    // ولا ندمج الشابترات إلا إذا لم يكفِ ذلك
+    const core = (p) => p.needs.length;
+    const targets = new Map();
+    plans.forEach((p) => {
+      p.fullCount = buildUnits(p.needs, null).length;
+      const canStudy = !p.today && p.allDays && p.allDays.length > 0;
+      targets.set(p, canStudy ? p.fullCount : 0);
+    });
+    const attemptStudy = () => {
+      plans.forEach((p) => { p.units = buildUnits(p.needs, targets.get(p)); });
+      const paced = runStudy(true);
+      return paced.leftovers.length ? runStudy(false) : paced;
+    };
+    let study = attemptStudy();
+    for (let attempt = 0; attempt < 300 && study.leftovers.length; attempt++) {
+      let changed = false;
+      for (const p of study.leftovers) {
+        const left = study.queues.get(p).length;
+        // كل المواد المتداخلة زمنياً (ومنها المادة نفسها) تتنازل عن جلسات بالتساوي النسبي
+        const pool = plans.filter((q) => targets.get(q) > core(q) &&
+          (q === p || (q.allDays && q.allDays.length && q.allDays[0] < p.examDate)));
+        let deficit = left;
+        while (deficit > 0 && pool.some((q) => targets.get(q) > core(q))) {
+          // نأخذ من المادة الأعلى في «جلسات لكل شابتر» حتى يتوزع التقليص بعدل
+          pool.sort((x, y) => targets.get(y) / core(y) - targets.get(x) / core(x) || y.examDate.localeCompare(x.examDate));
+          const q = pool[0];
+          targets.set(q, targets.get(q) - 1); deficit--; changed = true;
+        }
+        // لم يعد ممكناً التقليص دون دمج الشابترات
+        if (deficit > 0) {
+          const t = targets.get(p);
+          if (t > 0) { targets.set(p, Math.max(0, t - deficit)); changed = true; }
+        }
+      }
+      if (!changed) break;
+      study = attemptStudy();
+    }
+    Object.assign(used, study.used);
+    placed.push(...study.out);
+
+    plans.forEach((p) => {
+      if (!p.needs.length || p.today) return;
+      const fitted = p.units.length - study.queues.get(p).length;
+      if (fitted === 0) {
+        warnings.push(W('error', `لا يوجد وقت لمذاكرة شابترات «${p.name}» قبل اختبارها. زد ساعات المذاكرة أو قلّل أيام الراحة.`, p.id));
+      } else if (fitted < core(p)) {
+        warnings.push(W('warn', `الوقت لا يكفي لـ«${p.name}»، فدُمجت ${core(p)} شابترات في ${sessionsWord(fitted)}. زد ساعات المذاكرة لتحسين التوزيع.`, p.id));
+      } else if (fitted < p.fullCount) {
+        warnings.push(W('warn', `قُلّصت جلسات «${p.name}» من ${p.fullCount} إلى ${fitted} (جلسة لكل شابتر على الأقل) لضيق الوقت. زد ساعات المذاكرة لتفصيل أكثر.`, p.id));
+      }
+    });
+
+    // ---- 7) المرحلة الثالثة: مراجعة متباعدة في الوقت الفارغ ----
+    if (cfg.spacedReview) {
+      const touched = new Map(); // plan -> Map(chapterId -> آخر تاريخ مذاكرة/مراجعة)
+      plans.forEach((p) => touched.set(p, new Map()));
+      history.forEach((s) => {
+        const p = plans.find((x) => x.id === s.subjectId);
+        if (p && s.kind === 'study') (s.chapterIds || []).filter((c) => p.chapters.some((x) => x.id === c)).forEach((c) => touched.get(p).set(c, s.date < today ? s.date : addDays(today, -1)));
+      });
+      const studyByDate = {};
+      placed.filter((x) => x.kind === 'study').forEach((x) => { (studyByDate[x.date] = studyByDate[x.date] || []).push(x); });
+      for (const d of days) {
+        for (const p of plans) {
+          if (free(d) <= 0) break;
+          if (p.today || d >= p.examDate) continue;
+          if (p.reviewDays.includes(d)) {
+            // جلسة إضافية لحل الأسئلة في أيام المراجعة إن بقي وقت
+            placed.push({ plan: p, date: d, kind: 'review' });
+            used[d]++;
+            continue;
+          }
+          const map = touched.get(p);
+          let bestCh = null, bestGap = 0;
+          map.forEach((last, ch) => {
+            const gap = diffDays(last, d);
+            if (gap >= 2 && gap > bestGap) { bestGap = gap; bestCh = ch; }
+          });
+          if (bestCh) {
+            placed.push({ plan: p, date: d, kind: 'spaced', unit: { chapterIds: [bestCh], part: 1, parts: 1 } });
+            map.set(bestCh, d);
+            used[d]++;
+          }
+        }
+        (studyByDate[d] || []).forEach((x) => x.unit.chapterIds.forEach((c) => touched.get(x.plan).set(c, d)));
+      }
+    }
+
+    // ---- 8) مواد اختبارها اليوم: مراجعة سريعة ----
+    plans.filter((p) => p.today).forEach((p) => {
+      warnings.push(W('error', `اختبار «${p.name}» اليوم! أُضيفت جلسة مراجعة سريعة للملخصات فقط.`, p.id));
+      placed.push({ plan: p, date: today, kind: 'quick' });
+    });
+
+    // ---- 9) توزيع محتوى جلسات المراجعة النهائية على الشابترات ----
+    plans.forEach((p) => {
+      const revs = placed.filter((x) => x.plan === p && x.kind === 'review').sort((a, b) => a.date.localeCompare(b.date));
+      if (!revs.length) return;
+      const chIds = p.chapters.map((c) => c.id);
+      const chunks = revs.length - 1;
+      revs.forEach((r, i) => {
+        if (i === revs.length - 1 || !chIds.length) { r.unit = { chapterIds: [], comprehensive: true }; return; }
+        const a = Math.floor(i * chIds.length / chunks), b = Math.floor((i + 1) * chIds.length / chunks);
+        const ids = chIds.slice(a, b);
+        r.unit = ids.length ? { chapterIds: ids } : { chapterIds: [], practice: true };
+      });
+    });
+
+    // ---- 10) ترتيب جلسات كل يوم وإسناد الفترات: الأصعب في بداية اليوم (ذروة التركيز) ----
+    const order = { quick: 0, review: 1, study: 2, spaced: 3 };
+    const sessions = [];
+    const byDay = {};
+    placed.forEach((x) => { (byDay[x.date] = byDay[x.date] || []).push(x); });
+    Object.keys(byDay).sort().forEach((d) => {
+      const list = byDay[d].sort((a, b) =>
+        order[a.kind] - order[b.kind] ||
+        (a.kind === 'review' ? a.plan.examDate.localeCompare(b.plan.examDate) : 0) ||
+        b.plan.rank - a.plan.rank || a.plan.examDate.localeCompare(b.plan.examDate));
+      const occ = new Set(occupied[d] || []);
+      let slot = 0;
+      list.forEach((x) => {
+        while (occ.has(slot)) slot++;
+        occ.add(slot);
+        const unit = x.unit || { chapterIds: [] };
+        sessions.push({
+          id: nextId(), date: d, slot, subjectId: x.plan.id, kind: x.kind,
+          chapterIds: unit.chapterIds || [], part: unit.part || 1, parts: unit.parts || 1,
+          comprehensive: !!unit.comprehensive, practice: !!unit.practice, merged: !!unit.merged,
+          minutes: cfg.sessionMinutes, done: false, manual: false
+        });
+      });
+    });
+
+    return {
+      sessions, warnings,
+      meta: {
+        slotsPerDay: cfg.slotsPerDay, settings: cfg, today, days: days.length,
+        counts: {
+          study: sessions.filter((s) => s.kind === 'study').length,
+          review: sessions.filter((s) => s.kind === 'review').length,
+          spaced: sessions.filter((s) => s.kind === 'spaced').length
+        }
+      }
+    };
+  }
+
+  // وصف نصي للجلسة (يُحسب وقت العرض ليبقى متوافقاً مع تعديل أسماء الشابترات)
+  function describeSession(session, subject) {
+    const chapters = (subject && subject.chapters) || [];
+    const title = (id) => { const c = chapters.find((x) => x.id === id); return c ? c.title : 'شابتر محذوف'; };
+    const ids = session.chapterIds || [];
+    switch (session.kind) {
+      case 'quick': return 'مراجعة سريعة للملخصات قبل الاختبار';
+      case 'spaced': return 'مراجعة متباعدة: ' + (ids.length ? ids.map(title).join('، ') : 'ما سبق مذاكرته');
+      case 'review':
+        if (session.comprehensive) return chapters.length ? 'مراجعة شاملة وحل نموذج اختبار' : 'مراجعة عامة للمادة';
+        if (session.practice || !ids.length) return 'حل أسئلة متوقعة وتمارين متنوعة';
+        return 'مراجعة: ' + ids.map(title).join('، ');
+      default:
+        if (!ids.length) return 'مذاكرة عامة';
+        if (ids.length > 1) return 'مذاكرة مدمجة: ' + ids.map(title).join('، ');
+        return title(ids[0]) + (session.parts > 1 ? ` (جزء ${session.part} من ${session.parts})` : '');
+    }
+  }
+
+  // نسبة إنجاز شابتر من جلسات المذاكرة المرتبطة به
+  function chapterProgress(chapter, sessions) {
+    if (chapter.done) return 100;
+    const related = sessions.filter((s) => s.kind === 'study' && (s.chapterIds || []).includes(chapter.id));
+    if (!related.length) return 0;
+    if (related.some((s) => s.done && s.part === s.parts)) return 100;
+    return Math.round(100 * related.filter((s) => s.done).length / related.length);
+  }
+
+  return {
+    DIFFICULTY, DEFAULT_SETTINGS,
+    parseDate, formatDate, addDays, diffDays, todayLocal, weekday,
+    normalizeSettings, partsFor, chapterNeeds, buildUnits, examUrgency,
+    generateSchedule, describeSession, examChapters, chapterProgress, sessionsWord
+  };
+});
+
+</script>
+  <script>
+/* =========================================================================
+   app.js — واجهة التطبيق: الحالة، الحفظ، العرض، والأحداث
+   يعتمد على: StudyData (data.js) و Scheduler (scheduler.js) و SortableJS (اختياري)
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  const D = window.StudyData;
+  const S = window.Scheduler;
+  const STORAGE_KEY = 'study-notebook-v1';
+  const THEME_KEY = 'study-notebook-theme';
+  const WEEKDAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const KIND_LABELS = { study: 'مذاكرة', review: 'مراجعة نهائية', spaced: 'مراجعة متباعدة', quick: 'مراجعة سريعة' };
+  const VIEWS = ['dashboard', 'subjects', 'schedule', 'plans', 'questions', 'curriculum', 'help'];
+  const COLOR_COUNT = 8;
+
+  // ===================== أدوات عامة =====================
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = (p) => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const today = () => S.todayLocal();
+  const pad = (n) => String(n).padStart(2, '0');
+
+  // تخزين آمن: قد يُمنع الوصول للتخزين في بعض المتصفحات أو الوضع الخاص
+  const storage = {
+    get(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { window.localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+    remove(k) { try { window.localStorage.removeItem(k); } catch (e) { /* تجاهل */ } }
+  };
+
+  // تنسيق التواريخ (أرقام لاتينية لسهولة القراءة)
+  function toDate(str) { return new Date(str + 'T12:00:00'); }
+  function fmtDate(str, opts) {
+    try { return new Intl.DateTimeFormat('ar-u-nu-latn', opts || { weekday: 'long', day: 'numeric', month: 'long' }).format(toDate(str)); }
+    catch (e) { return str; }
+  }
+  function fmtHijri(str) {
+    try { return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }).format(toDate(str)); }
+    catch (e) { return ''; }
+  }
+  function daysWord(n) {
+    if (n === 1) return 'يوم واحد';
+    if (n === 2) return 'يومان';
+    return n + (n >= 3 && n <= 10 ? ' أيام' : ' يوماً');
+  }
+  function daysLeftLabel(n) {
+    if (n == null) return 'بلا تاريخ';
+    if (n < 0) return 'انتهى';
+    if (n === 0) return 'اليوم';
+    if (n === 1) return 'غداً';
+    return 'بعد ' + daysWord(n);
+  }
+  function fmtClock(mins) {
+    const m = ((Math.round(mins) % 1440) + 1440) % 1440;
+    return pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+  }
+
+  // ===================== الحالة والحفظ =====================
+  function defaultSettings() {
+    return { dailyHours: 4, sessionMinutes: 50, breakMinutes: 10, reviewDays: 2, restDays: [], spacedReview: true, activeTime: 'evening', startTime: '' };
+  }
+
+  function makeChapter(title, pages, topics, bank) {
+    const ch = { id: uid('ch'), title: String(title || '').trim() || 'شابتر بلا عنوان', pages: Number(pages) > 0 ? Number(pages) : 0, done: false, inExam: true, topics: topics || [], questions: [] };
+    if (bank) ch.bank = bank;
+    return ch;
+  }
+
+  // أسئلة البنك المكتوبة (مع الإجابات) لشابتر مرتبط ببنك
+  function bankQuestions(c) {
+    const list = (c.bank && D.QUESTION_BANK && D.QUESTION_BANK[c.bank]) || [];
+    return list.filter((b) => !c.questions.some((q) => q.text === b.text))
+      .map((b) => ({ id: uid('q'), text: b.text, type: b.type, status: 'todo', answer: b.answer || '', lecture: !!b.lecture, generated: false, fromBank: true }));
+  }
+
+  function nextColor(subjects) {
+    const used = subjects.map((s) => s.colorIndex);
+    for (let i = 0; i < COLOR_COUNT; i++) if (!used.includes(i)) return i;
+    return subjects.length % COLOR_COUNT;
+  }
+
+  function makeSubject(f, subjects) {
+    return {
+      id: uid('sub'),
+      name: String(f.name || '').trim(),
+      code: String(f.code || '').trim(),
+      teacher: String(f.teacher || '').trim(),
+      difficulty: D.DIFFICULTY_LABELS[f.difficulty] ? f.difficulty : 'medium',
+      type: D.TYPE_LABELS[f.type] ? f.type : 'understand',
+      source: D.SOURCE_LABELS[f.source] ? f.source : 'book',
+      examDate: S.parseDate(f.examDate) ? f.examDate : '',
+      colorIndex: nextColor(subjects),
+      suggested: !!f.suggested,
+      chapters: f.chapters || []
+    };
+  }
+
+  function courseChapters(code) {
+    const suggested = D.SUGGESTED_CHAPTERS[code] || [];
+    return suggested.map((c) => {
+        const ch = makeChapter(c.title, 0, c.topics, c.bank);
+      if (c.sessions) ch.sessions = c.sessions;
+      ch.sessionsSet = true;
+      ch.questions = bankQuestions(ch);
+      return ch;
+    });
+  }
+
+  function subjectFromCourse(course, subjects) {
+    const suggested = D.SUGGESTED_CHAPTERS[course.code];
+    const sub = makeSubject({
+      name: course.name, code: course.code, difficulty: course.difficulty, type: course.type,
+      source: course.type === 'language' || course.type === 'memorize' ? 'notes' : 'book',
+      suggested: !!suggested,
+      chapters: courseChapters(course.code)
+    }, subjects);
+    sub.contentVersion = (D.COURSE_CONTENT_VERSION || {})[course.code] || 1;
+    if (sub.contentVersion > 1) sub.suggested = false; // شابترات من محاضرة الطالبة وليست مقترحة
+    return sub;
+  }
+
+  function createInitialState() {
+    const st = {
+      version: 1, settings: defaultSettings(), subjects: [], sessions: [], warnings: [],
+      generatedAt: null, dirty: false, focusMinutes: 0,
+      ui: { view: 'dashboard', weekOffset: 0, qSubject: '', qStatus: 'all', qType: 'all' }
+    };
+    const level1 = D.STUDY_PLAN.levels[0];
+    level1.courses.forEach((c) => st.subjects.push(subjectFromCourse(c, st.subjects)));
+    return st;
+  }
+
+  // التحقق من البيانات المحمّلة أو المستوردة وإكمال الناقص
+  function normalizeState(raw) {
+    if (!raw || typeof raw !== 'object' || !Array.isArray(raw.subjects)) throw new Error('بنية الملف غير صحيحة: لا توجد قائمة مواد.');
+    const st = createInitialState();
+    let migratedSessions = false;
+    st.subjects = [];
+    st.settings = Object.assign(defaultSettings(), raw.settings || {});
+    raw.subjects.forEach((s) => {
+      if (!s || typeof s !== 'object') return;
+      const sub = makeSubject(s, st.subjects);
+      if (s.id) sub.id = String(s.id);
+      if (Number.isInteger(s.colorIndex)) sub.colorIndex = s.colorIndex % COLOR_COUNT;
+      if (s.demoDate) sub.demoDate = true;
+      sub.contentVersion = Number(s.contentVersion) || 1;
+      sub.contentDismissed = Number(s.contentDismissed) || 0;
+      sub.chapters = (Array.isArray(s.chapters) ? s.chapters : []).map((c) => {
+        const ch = makeChapter(c && c.title, c && c.pages, Array.isArray(c && c.topics) ? c.topics : [], c && c.bank);
+        if (c && c.id) ch.id = String(c.id);
+        ch.done = !!(c && c.done);
+        ch.inExam = !(c && c.inExam === false);
+        if (c && Number(c.sessions) > 0) ch.sessions = Math.min(10, Math.round(Number(c.sessions)));
+        // شابترات البنك المحفوظة قبل إضافة «الجلسات»: نطبّق العدد المقترح مرة واحدة فقط
+        ch.sessionsSet = !!(c && c.sessionsSet);
+        if (ch.bank && !ch.sessionsSet) {
+          const def = ((D.SUGGESTED_CHAPTERS[s.code] || []).find((x) => x.bank === ch.bank) || {}).sessions;
+          if (def && !ch.sessions) { ch.sessions = def; migratedSessions = true; }
+          ch.sessionsSet = true;
+        }
+        ch.questions = (Array.isArray(c && c.questions) ? c.questions : []).filter((q) => q && q.text).map((q) => ({
+          id: q.id ? String(q.id) : uid('q'), text: String(q.text),
+          type: D.QUESTION_TYPES[q.type] ? q.type : 'essay',
+          status: D.QUESTION_STATUS[q.status] ? q.status : 'todo', generated: !!q.generated,
+          answer: q.answer ? String(q.answer) : '', lecture: !!q.lecture, fromBank: !!q.fromBank
+        }));
+        return ch;
+      });
+      st.subjects.push(sub);
+    });
+    const ids = new Set(st.subjects.map((s) => s.id));
+    st.sessions = (Array.isArray(raw.sessions) ? raw.sessions : [])
+      .filter((s) => s && ids.has(s.subjectId) && S.parseDate(s.date) && KIND_LABELS[s.kind])
+      .map((s) => Object.assign({ chapterIds: [], part: 1, parts: 1, minutes: 50, done: false, manual: false }, s, { slot: Math.max(0, Number(s.slot) || 0) }));
+    st.warnings = Array.isArray(raw.warnings) ? raw.warnings.filter((w) => w && w.message) : [];
+    st.generatedAt = raw.generatedAt || null;
+    st.dirty = !!raw.dirty;
+    st.focusMinutes = Number(raw.focusMinutes) || 0;
+    st.inExamAsked = !!raw.inExamAsked;
+    if (migratedSessions && st.sessions.some((x) => !x.done)) st.dirty = true;
+    st.ui = Object.assign(st.ui, raw.ui || {});
+    return st;
+  }
+
+  function loadState() {
+    const txt = storage.get(STORAGE_KEY);
+    if (!txt) return createInitialState();
+    try { return normalizeState(JSON.parse(txt)); }
+    catch (e) { return createInitialState(); }
+  }
+
+  let state = loadState();
+  let storageWarned = false;
+
+  function save() {
+    const ok = storage.set(STORAGE_KEY, JSON.stringify(state));
+    if (!ok && !storageWarned) {
+      storageWarned = true;
+      toast('تعذّر الحفظ في المتصفح (قد يكون الوضع الخاص مفعّلاً). صدّر بياناتك من «كيفية الاستخدام» لتحتفظ بها.');
+    }
+  }
+  function commit() { save(); render(); }
+
+  // ===================== استعلامات مساعدة =====================
+  const subjectById = (id) => state.subjects.find((s) => s.id === id);
+  const colorOf = (sub) => 'var(--c' + ((sub && sub.colorIndex) || 0) % COLOR_COUNT + ')';
+  const daysLeft = (sub) => (sub.examDate ? S.diffDays(today(), sub.examDate) : null);
+
+  // ترتيب المواد: القادمة حسب الأقرب، ثم بلا تاريخ، ثم المنتهية
+  function sortedSubjects() {
+    const rank = (s) => { const d = daysLeft(s); return d == null ? 1 : d < 0 ? 2 : 0; };
+    return state.subjects.slice().sort((a, b) => rank(a) - rank(b) || (a.examDate || '').localeCompare(b.examDate || '') || a.name.localeCompare(b.name, 'ar'));
+  }
+
+  function effectiveSettings() { return S.normalizeSettings(state.settings, []); }
+  function startMinutes() {
+    const t = state.settings.startTime || (D.ACTIVE_TIMES[state.settings.activeTime] || D.ACTIVE_TIMES.evening).start;
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+  function slotRange(slot) {
+    const cfg = effectiveSettings();
+    const start = startMinutes() + slot * (cfg.sessionMinutes + cfg.breakMinutes);
+    return [fmtClock(start), fmtClock(start + cfg.sessionMinutes)];
+  }
+
+  const chapterPct = (ch) => S.chapterProgress(ch, state.sessions);
+  const examChapters = (sub) => S.examChapters(sub);
+  function subjectPct(sub) {
+    const list = examChapters(sub);
+    if (!list.length) return 0;
+    return Math.round(list.reduce((a, c) => a + chapterPct(c), 0) / list.length);
+  }
+  const isOverdue = (s) => !s.done && s.date < today();
+  const sessionTitle = (s) => S.describeSession(s, subjectById(s.subjectId));
+
+  function stats() {
+    const chapters = state.subjects.flatMap((s) => examChapters(s));
+    const questions = state.subjects.flatMap((s) => s.chapters).flatMap((c) => c.questions);
+    const done = state.sessions.filter((s) => s.done);
+    return {
+      chaptersDone: chapters.filter((c) => chapterPct(c) === 100).length,
+      chaptersTotal: chapters.length,
+      studyMinutes: done.reduce((a, s) => a + (Number(s.minutes) || 0), 0),
+      focusMinutes: state.focusMinutes,
+      qDone: questions.filter((q) => q.status === 'done').length,
+      qReview: questions.filter((q) => q.status === 'review').length,
+      qTotal: questions.length,
+      sessionsDone: done.length,
+      sessionsTotal: state.sessions.length,
+      overdue: state.sessions.filter(isOverdue)
+    };
+  }
+
+  // ===================== مكوّنات عرض صغيرة =====================
+  function urgencyChip(sub) {
+    const d = daysLeft(sub);
+    const u = S.examUrgency(d);
+    const cls = { red: 'chip-red', orange: 'chip-orange', green: 'chip-green', past: 'chip-past', none: '' }[u];
+    return `<span class="chip ${cls}">${esc(daysLeftLabel(d))}</span>`;
+  }
+  function countdownBox(sub) {
+    const d = daysLeft(sub);
+    const u = S.examUrgency(d);
+    if (d == null) return `<div class="countdown u-none"><b>—</b><small>بلا تاريخ</small></div>`;
+    if (d < 0) return `<div class="countdown u-past"><b>✓</b><small>انتهى</small></div>`;
+    return `<div class="countdown u-${u}"><b>${d}</b><small>${d === 0 ? 'اليوم' : d === 1 ? 'يوم' : d <= 10 ? 'أيام' : 'يوماً'}</small></div>`;
+  }
+  function progressBar(pct, small) {
+    return `<div class="progress${small ? ' sm' : ''}" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>`;
+  }
+  function optionList(map, selected) {
+    return Object.entries(map).map(([v, l]) => `<option value="${v}"${v === selected ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  }
+
+  // ===================== التوجيه بين التبويبات =====================
+  function setView(view) {
+    if (!VIEWS.includes(view)) view = 'dashboard';
+    state.ui.view = view;
+    save();
+    render();
+    try { history.replaceState(null, '', '#' + view); } catch (e) { /* تجاهل */ }
+    window.scrollTo({ top: 0 });
+  }
+
+  function render() {
+    const view = state.ui.view;
+    $$('[data-view-panel]').forEach((el) => { el.hidden = el.dataset.viewPanel !== view; });
+    $$('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.view === view)));
+    const renderers = { dashboard: renderDashboard, subjects: renderSubjects, schedule: renderSchedule, plans: renderPlans, questions: renderQuestions, curriculum: renderCurriculum, help: renderHelp };
+    renderers[view]();
+    const plan = D.STUDY_PLAN;
+    $('#brand-sub').textContent = plan.major + ' · ' + plan.university;
+  }
+
+  // سؤال لمرة واحدة: من علّم الشابترات قبل وجود خيار «مقرر في الاختبار» قد يقصد به المقرر
+  function inExamBanner() {
+    if (state.inExamAsked || !state.subjects.some((s) => s.chapters.some((c) => c.done))) return '';
+    return `<div class="alert alert-warn"><div class="alert-head"><span>ماذا تعني علامة ✓ التي وضعتها على الشابترات؟</span></div>
+      <p>علامة ✓ في العمود الأول تعني «أنهيت مذاكرته»، لذلك استبعدها الجدول. الآن يوجد عمود مستقل باسم «مقرر» للشابترات المطلوبة في الاختبار.</p>
+      <div class="btn-row"><button class="btn btn-sm btn-primary" data-action="convert-inexam">كانت تعني المقرر في الاختبار: حوّلها وأعد توليد الجدول</button>
+      <button class="btn btn-sm" data-action="keep-done">كانت تعني أني أنهيت مذاكرتها</button></div></div>`;
+  }
+
+  // تحديث شابترات مقرر (مثل فيزياء 1) من شرائح المحاضرة للبيانات المحفوظة سابقاً
+  function contentUpdates() {
+    const versions = D.COURSE_CONTENT_VERSION || {};
+    return state.subjects.filter((s) => versions[s.code] && (s.contentVersion || 1) < versions[s.code] && (s.contentDismissed || 0) < versions[s.code]);
+  }
+  function contentBanner() {
+    return contentUpdates().map((s) => {
+      const chs = D.SUGGESTED_CHAPTERS[s.code];
+      const qn = chs.reduce((a, c) => a + ((D.QUESTION_BANK[c.bank] || []).length), 0);
+      return `<div class="alert alert-info"><div class="alert-head"><span>شابترات «${esc(s.name)}» من شرائح محاضرتك جاهزة</span></div>
+        <p>${chs.length} شابترات (${esc(chs.map((c) => c.title.split(' — ')[0]).join('، '))}) مع ${qn} سؤالاً مكتوبة بإجاباتها. ستحل محل الشابترات المقترحة، وتُحدد كلها «مقررة» في الاختبار.</p>
+        <div class="btn-row"><button class="btn btn-sm btn-primary" data-action="apply-content" data-sid="${s.id}">استبدل الشابترات وأضف الأسئلة</button>
+        <button class="btn btn-sm" data-action="dismiss-content" data-sid="${s.id}">لاحقاً</button></div></div>`;
+    }).join('');
+  }
+  function applyContent(sid) {
+    const s = subjectById(sid);
+    if (!s) return;
+    const oldIds = new Set(s.chapters.map((c) => c.id));
+    s.chapters = courseChapters(s.code);
+    s.contentVersion = D.COURSE_CONTENT_VERSION[s.code];
+    s.suggested = false;
+    const hadSessions = state.sessions.some((x) => x.subjectId === s.id && !x.done);
+    state.sessions = state.sessions.filter((x) => x.subjectId !== s.id || x.done || !x.chapterIds.some((id) => oldIds.has(id)));
+    state.ui.qSubject = s.id;
+    const qn = s.chapters.reduce((a, c) => a + c.questions.length, 0);
+    toast(`حُدّثت «${s.name}»: ${s.chapters.length} شابترات و${qn} سؤالاً.`);
+    if (hadSessions && s.examDate) { generate(true); setView('questions'); return; }
+    markDirty();
+    setView('questions');
+  }
+
+  function convertInExam() {
+    state.subjects.forEach((s) => {
+      if (!s.chapters.some((c) => c.done)) return;
+      s.chapters.forEach((c) => { c.inExam = c.done; c.done = false; });
+    });
+    state.inExamAsked = true;
+    toast('صارت الشابترات المحددة هي المقررة في الاختبار.');
+    generate(true);
+  }
+
+  // ===================== الرئيسية =====================
+  function renderDashboard() {
+    const st = stats();
+    const upcoming = sortedSubjects().filter((s) => daysLeft(s) != null && daysLeft(s) >= 0);
+    const hasDates = state.subjects.some((s) => s.examDate);
+
+    // بطاقة البداية
+    let onboard = '';
+    if (!state.subjects.length) {
+      onboard = `<div class="onboard"><h3>ابدأ بإضافة موادك</h3><p>أضف مادة يدوياً أو استورد مواد مستوى من خطتك الجامعية.</p>
+        <div class="btn-row"><button class="btn btn-primary" data-action="new-subject">+ إضافة مادة</button><button class="btn" data-action="goto" data-view="curriculum">خطتي الجامعية</button></div></div>`;
+    } else if (!hasDates) {
+      onboard = `<div class="onboard"><h3>خطوتك التالية: تواريخ الاختبارات</h3>
+        <p>أضفت لك مواد المستوى الأول من خطتك (${state.subjects.length} مواد) مع شابترات مقترحة. أدخل تاريخ كل اختبار ثم ولّد الجدول.</p>
+        <ol><li>افتح «المواد» واختر تاريخ الاختبار لكل مادة.</li><li>راجع الشابترات وعدّلها لتطابق منهجك.</li><li>من «الجدول» اضبط ساعاتك واضغط «توليد الجدول».</li></ol>
+        <div class="btn-row"><button class="btn btn-primary" data-action="goto" data-view="subjects">أدخل تواريخ الاختبارات</button>
+        <button class="btn" data-action="demo-dates">جرّب بتواريخ تجريبية</button></div></div>`;
+    } else if (!state.sessions.length) {
+      onboard = `<div class="onboard"><h3>التواريخ جاهزة، ولّد جدولك</h3><p>سيوزع التطبيق الشابترات على الأيام المتبقية ويحجز يومين للمراجعة قبل كل اختبار.</p>
+        <div class="btn-row"><button class="btn btn-primary" data-action="generate">توليد الجدول</button><button class="btn" data-action="goto" data-view="schedule">إعدادات الجدول</button></div></div>`;
+    }
+    if (state.subjects.some((s) => s.demoDate)) {
+      onboard += `<div class="alert alert-warn"><div class="alert-head"><span>بعض التواريخ تجريبية</span><button class="btn btn-sm" data-action="clear-demo">امسح التواريخ التجريبية</button></div><p>استبدلها بتواريخ اختباراتك الحقيقية من تبويب المواد.</p></div>`;
+    }
+    $('#dash-onboard').innerHTML = contentBanner() + inExamBanner() + onboard;
+
+    // الإحصائيات
+    const hours = (st.studyMinutes / 60);
+    $('#dash-stats').innerHTML = `
+      <div class="stat"><span class="stat-label">الشابترات المنجزة</span><span class="stat-value">${st.chaptersDone}<small> / ${st.chaptersTotal}</small></span><span class="stat-foot">${st.chaptersTotal ? Math.round(100 * st.chaptersDone / st.chaptersTotal) : 0}% من المنهج</span></div>
+      <div class="stat"><span class="stat-label">ساعات المذاكرة</span><span class="stat-value">${hours.toFixed(hours % 1 ? 1 : 0)}<small> س</small></span><span class="stat-foot">${st.focusMinutes ? 'و' + Math.round(st.focusMinutes) + ' دقيقة بالمؤقت' : 'من الجلسات المنجزة'}</span></div>
+      <div class="stat"><span class="stat-label">الأسئلة المحلولة</span><span class="stat-value">${st.qDone}<small> / ${st.qTotal}</small></span><span class="stat-foot">${st.qReview} تحتاج مراجعة</span></div>
+      <div class="stat"><span class="stat-label">الجلسات المنجزة</span><span class="stat-value">${st.sessionsDone}<small> / ${st.sessionsTotal}</small></span><span class="stat-foot">${st.overdue.length ? `<span style="color:var(--red)">${st.overdue.length} متأخرة</span>` : 'لا توجد جلسات متأخرة'}</span></div>`;
+
+    // جلسات اليوم
+    const t = today();
+    const todays = state.sessions.filter((s) => s.date === t).sort((a, b) => a.slot - b.slot);
+    $('#dash-today').innerHTML = `<div class="panel-title"><h3>مهام اليوم</h3><span class="muted">${esc(fmtDate(t))}</span></div>` +
+      (todays.length ? `<ul class="task-list">${todays.map(taskItem).join('')}</ul>`
+        : `<p class="empty">${state.sessions.length ? 'لا جلسات اليوم. استرح أو راجع أسئلتك المتوقعة.' : 'لا يوجد جدول بعد.'}</p>`);
+
+    // العد التنازلي
+    $('#dash-exams').innerHTML = `<div class="panel-title"><h3>الاختبارات القادمة</h3><button class="btn btn-sm btn-ghost" data-action="goto" data-view="subjects">كل المواد</button></div>` +
+      (upcoming.length ? `<ul class="exam-list">${upcoming.map((s) => `
+        <li class="exam-item">${countdownBox(s)}<div><strong>${esc(s.name)}</strong>${s.demoDate ? ' <span class="chip">تجريبي</span>' : ''}<div class="task-meta">${esc(fmtDate(s.examDate))} · ${esc(fmtHijri(s.examDate))}</div></div></li>`).join('')}</ul>`
+        : `<p class="empty">لم تُدخل تواريخ اختبارات قادمة.</p>`);
+
+    // المتأخرات
+    $('#dash-overdue').innerHTML = st.overdue.length ? overdueAlert(st.overdue) : '';
+
+    // التقدم لكل مادة
+    $('#dash-progress').innerHTML = `<div class="panel-title"><h3>التقدم في المواد</h3></div>` + (state.subjects.length ? sortedSubjects().map((s) => {
+      const pct = subjectPct(s);
+      const qs = s.chapters.flatMap((c) => c.questions);
+      const qd = qs.filter((q) => q.status === 'done').length;
+      return `<div class="progress-line" style="--subject-color:${colorOf(s)}"><span><b style="color:${colorOf(s)}">●</b> ${esc(s.name)}</span><span class="num">${pct}%</span>${progressBar(pct)}<span class="task-meta">الأسئلة: ${qd} / ${qs.length}</span></div>`;
+    }).join('') : '<p class="empty">لا توجد مواد.</p>');
+
+    renderTimer();
+    renderTimes();
+  }
+
+  function taskItem(s) {
+    const sub = subjectById(s.subjectId);
+    const [a, b] = slotRange(s.slot);
+    return `<li class="task${s.done ? ' done' : ''}" style="--subject-color:${colorOf(sub)}">
+      <input type="checkbox" data-action="toggle-session" data-id="${s.id}" ${s.done ? 'checked' : ''} aria-label="تمت الجلسة">
+      <div><div class="task-title">${esc(sub ? sub.name : '')}: ${esc(sessionTitle(s))}</div><div class="task-meta num">${a}–${b} · ${KIND_LABELS[s.kind]}</div></div>
+      <button class="icon-btn" data-action="open-session" data-id="${s.id}" aria-label="تفاصيل الجلسة">⋯</button></li>`;
+  }
+
+  function overdueAlert(list) {
+    const items = list.slice().sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5).map((s) => {
+      const sub = subjectById(s.subjectId);
+      return `<li>${esc(fmtDate(s.date, { day: 'numeric', month: 'long' }))}: ${esc(sub ? sub.name : '')} — ${esc(sessionTitle(s))} <button class="btn btn-sm" data-action="toggle-session" data-id="${s.id}">تمت</button></li>`;
+    }).join('');
+    return `<div class="alert alert-error"><div class="alert-head"><span>لديك ${list.length} ${list.length === 1 ? 'جلسة متأخرة' : 'جلسات متأخرة'}</span>
+      <button class="btn btn-sm btn-primary" data-action="generate">أعد توليد الجدول لتوزيعها</button></div>
+      <ul>${items}</ul>${list.length > 5 ? `<p class="task-meta">و${list.length - 5} غيرها.</p>` : ''}</div>`;
+  }
+
+  // ===== اقتراح أوقات المذاكرة المثالية =====
+  function renderTimes() {
+    const act = D.ACTIVE_TIMES[state.settings.activeTime] || D.ACTIVE_TIMES.evening;
+    const hard = state.subjects.filter((s) => s.difficulty === 'hard' || s.type === 'math').map((s) => s.name);
+    const memo = state.subjects.filter((s) => s.type === 'memorize' || s.type === 'language').map((s) => s.name);
+    const cfg = effectiveSettings();
+    const [first] = slotRange(0);
+    const [, last] = slotRange(cfg.slotsPerDay - 1);
+    $('#dash-times').innerHTML = `<h3>أوقات المذاكرة المقترحة</h3>
+      <p class="muted">أنت <b>${esc(act.label)}</b> النشاط. يومك الدراسي: <span class="num">${first}–${last}</span> (${cfg.slotsPerDay} ${cfg.slotsPerDay === 1 ? 'جلسة' : cfg.slotsPerDay === 2 ? 'جلستان' : 'جلسات'} × ${cfg.sessionMinutes} د).</p>
+      <ul class="tips">
+        <li>ذروة تركيزك ${esc(act.peak)}: خصصها للمواد الصعبة${hard.length ? ' (' + esc(hard.join('، ')) + ')' : ''}. الجدول يضعها في أول فترات اليوم.</li>
+        <li>${esc(act.light)}: مناسب للحفظ والمراجعة الخفيفة${memo.length ? ' (' + esc(memo.join('، ')) + ')' : ''}.</li>
+        <li>راجع المحفوظات قبل النوم مباشرة؛ النوم يثبّت الذاكرة.</li>
+        <li>تجنّب المذاكرة الثقيلة بعد وجبة كبيرة مباشرة، وابدأ بعدها بمراجعة خفيفة.</li>
+      </ul>
+      <button class="btn btn-sm" data-action="goto" data-view="schedule">غيّر وقت النشاط</button>`;
+  }
+
+  // ===== مؤقت بومودورو =====
+  const timer = { phase: 'focus', remaining: null, running: false, endAt: 0, handle: null };
+  function timerLengths() {
+    const cfg = effectiveSettings();
+    return { focus: cfg.sessionMinutes * 60, rest: Math.max(1, cfg.breakMinutes || 5) * 60 };
+  }
+  function renderTimer() {
+    const el = $('#dash-timer');
+    if (!el) return;
+    const len = timerLengths();
+    if (timer.remaining == null) timer.remaining = len.focus;
+    const r = Math.max(0, Math.ceil(timer.remaining));
+    el.innerHTML = `<div class="timer"><div class="panel-title"><h3>مؤقت المذاكرة</h3><span class="chip ${timer.phase === 'focus' ? 'chip-accent' : 'chip-orange'}">${timer.phase === 'focus' ? 'تركيز' : 'راحة'}</span></div>
+      <div class="timer-face" id="timer-face" aria-live="off">${pad(Math.floor(r / 60))}:${pad(r % 60)}</div>
+      <div class="timer-phase">${timer.phase === 'focus' ? 'أغلق الإشعارات وركّز على مهمة واحدة' : 'ابتعد عن الشاشة وتحرك قليلاً'}</div>
+      <div class="btn-row"><button class="btn btn-primary btn-sm" data-action="timer-toggle">${timer.running ? 'إيقاف مؤقت' : 'ابدأ'}</button>
+      <button class="btn btn-sm" data-action="timer-reset">إعادة</button><button class="btn btn-sm btn-ghost" data-action="timer-skip">تخطٍّ</button></div></div>`;
+  }
+  function timerTick() {
+    timer.remaining = (timer.endAt - Date.now()) / 1000;
+    if (timer.remaining <= 0) {
+      const len = timerLengths();
+      if (timer.phase === 'focus') {
+        state.focusMinutes += len.focus / 60;
+        save();
+        toast('أحسنت! انتهت جلسة التركيز، خذ راحة.');
+        timer.phase = 'rest'; timer.remaining = len.rest;
+      } else {
+        toast('انتهت الراحة، لنبدأ جلسة جديدة.');
+        timer.phase = 'focus'; timer.remaining = len.focus;
+      }
+      timer.endAt = Date.now() + timer.remaining * 1000;
+      if (state.ui.view === 'dashboard') renderDashboard();
+      return;
+    }
+    const face = $('#timer-face');
+    if (face) { const r = Math.ceil(timer.remaining); face.textContent = pad(Math.floor(r / 60)) + ':' + pad(r % 60); }
+  }
+  function timerToggle() {
+    if (timer.running) {
+      clearInterval(timer.handle); timer.running = false;
+      timer.remaining = (timer.endAt - Date.now()) / 1000;
+    } else {
+      if (timer.remaining == null) timer.remaining = timerLengths().focus;
+      timer.endAt = Date.now() + timer.remaining * 1000;
+      timer.running = true;
+      timer.handle = setInterval(timerTick, 500);
+    }
+    renderTimer();
+  }
+  function timerReset() {
+    clearInterval(timer.handle);
+    Object.assign(timer, { phase: 'focus', remaining: timerLengths().focus, running: false });
+    renderTimer();
+  }
+  function timerSkip() {
+    const len = timerLengths();
+    timer.phase = timer.phase === 'focus' ? 'rest' : 'focus';
+    timer.remaining = timer.phase === 'focus' ? len.focus : len.rest;
+    timer.endAt = Date.now() + timer.remaining * 1000;
+    renderTimer();
+  }
+
+  // ===================== المواد =====================
+  function renderSubjects() {
+    const list = sortedSubjects();
+    $('#subjects-list').innerHTML = contentBanner() + inExamBanner() + (list.length ? list.map(subjectCard).join('')
+      : `<div class="empty">لا توجد مواد بعد. اضغط «إضافة مادة» أو استورد مواد من «خطتي الجامعية».</div>`);
+  }
+
+  function subjectCard(s) {
+    const pct = subjectPct(s);
+    const d = daysLeft(s);
+    return `<article class="subject-card" style="--subject-color:${colorOf(s)}" id="subject-${s.id}">
+      <header>
+        <div>
+          <div class="subject-title"><h3>${esc(s.name)}</h3>${s.code ? `<span class="subject-code">${esc(s.code)}</span>` : ''}</div>
+          <div class="subject-meta">
+            ${urgencyChip(s)}
+            <span class="chip">${esc(D.DIFFICULTY_LABELS[s.difficulty])}</span>
+            <span class="chip">${esc(D.TYPE_LABELS[s.type])}</span>
+            <span class="chip">${esc(D.SOURCE_LABELS[s.source])}</span>
+            ${s.teacher ? `<span class="chip">المدرس: ${esc(s.teacher)}</span>` : ''}
+          </div>
+        </div>
+        <div class="subject-actions">
+          <button class="icon-btn" data-action="edit-subject" data-sid="${s.id}" aria-label="تعديل المادة" title="تعديل">✎</button>
+          <button class="icon-btn danger" data-action="delete-subject" data-sid="${s.id}" aria-label="حذف المادة" title="حذف">🗑</button>
+        </div>
+      </header>
+      <div class="subject-body">
+        <div class="exam-box">
+          <label class="field"><span>تاريخ الاختبار</span>
+            <input type="date" id="exam-${s.id}" data-bind="examDate" data-sid="${s.id}" value="${esc(s.examDate)}"></label>
+          ${s.examDate ? `<div class="hijri">${esc(fmtDate(s.examDate))}<br>${esc(fmtHijri(s.examDate))}${s.demoDate ? ' · <b>تاريخ تجريبي</b>' : ''}</div>` : '<div class="hijri">اختر التاريخ لتدخل المادة الجدول.</div>'}
+          ${d != null && d < 0 ? '<div class="hijri">انتهى الاختبار؛ لن تُجدول المادة.</div>' : ''}
+          ${s.chapters.length ? examScopeField(s) : ''}
+          <div class="progress-line"><span class="task-meta">إنجاز المادة</span><span class="num">${pct}%</span>${progressBar(pct)}</div>
+        </div>
+        <div>
+          ${s.suggested ? `<p class="suggested-note">الشابترات مقترحة من توصيف المقرر المعتاد. عدّل العناوين وأضف عدد الصفحات لتطابق منهجك. <button class="btn btn-sm btn-ghost" data-action="dismiss-suggested" data-sid="${s.id}">فهمت</button></p>` : ''}
+          ${s.chapters.length ? `<div class="chapter-head"><span title="أنهيت مذاكرته">أنهيت</span><span>الشابتر</span><span title="مقرر في الاختبار">مقرر</span><span title="عدد جلسات المذاكرة">الجلسات</span><span>الصفحات</span><span></span></div>
+          <ul class="chapter-list">${s.chapters.map((c) => chapterRow(s, c)).join('')}</ul>`
+            : '<p class="empty">لا توجد شابترات. المادة بلا شابترات تُجدول لها مراجعة عامة فقط.</p>'}
+          <form class="btn-row" data-form="add-chapter" data-sid="${s.id}" style="margin-top:8px">
+            <input class="input" style="flex:1 1 180px" id="newch-${s.id}" name="title" placeholder="عنوان شابتر جديد" aria-label="عنوان شابتر جديد">
+            <input class="input" style="width:90px" id="newpg-${s.id}" name="pages" type="number" min="0" placeholder="صفحات" aria-label="عدد الصفحات">
+            <button class="btn btn-sm" type="submit">+ شابتر</button>
+          </form>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  // «الاختبار يشمل حتى الشابتر...»: اختصار لتحديد المقرر بسرعة (مثل اختبارات منتصف الفصل)
+  function examScopeField(s) {
+    const flags = s.chapters.map((c) => c.inExam !== false);
+    const n = flags.lastIndexOf(true);
+    const prefix = n >= 0 && flags.every((f, i) => f === (i <= n));
+    const value = !prefix ? 'custom' : n === flags.length - 1 ? 'all' : String(n);
+    const opts = s.chapters.slice(0, -1).map((c, i) => `<option value="${i}"${value === String(i) ? ' selected' : ''}>حتى: ${esc(c.title)}</option>`).join('');
+    return `<label class="field"><span>الاختبار يشمل</span><select id="scope-${s.id}" data-bind="exam-scope" data-sid="${s.id}">
+      <option value="all"${value === 'all' ? ' selected' : ''}>كل الشابترات (${s.chapters.length})</option>${opts}
+      ${value === 'custom' ? `<option value="custom" selected>اختيار مخصص (${flags.filter(Boolean).length})</option>` : ''}</select></label>`;
+  }
+
+  function chapterRow(s, c) {
+    const pct = chapterPct(c);
+    const auto = S.partsFor(Object.assign({}, c, { sessions: 0 }), s.difficulty);
+    const manual = Number(c.sessions) || 0;
+    const opts = [`<option value="0"${manual ? '' : ' selected'}>آلي (${auto})</option>`]
+      .concat(Array.from({ length: 8 }, (_, i) => `<option value="${i + 1}"${manual === i + 1 ? ' selected' : ''}>${i + 1}</option>`)).join('');
+    return `<li class="chapter-row${c.inExam === false ? ' not-in-exam' : ''}">
+      <input type="checkbox" data-bind="chapter-done" data-sid="${s.id}" data-cid="${c.id}" ${c.done ? 'checked' : ''} aria-label="أنهيت مذاكرة الشابتر" title="أنهيت مذاكرته">
+      <div class="chapter-main"><input class="input" data-bind="chapter-title" data-sid="${s.id}" data-cid="${c.id}" id="cht-${c.id}" value="${esc(c.title)}" aria-label="عنوان الشابتر" dir="auto">
+        <div class="chapter-sub">${progressBar(pct, true)}<span class="chapter-pct">${pct}%</span></div></div>
+      <input type="checkbox" data-bind="chapter-inexam" data-sid="${s.id}" data-cid="${c.id}" ${c.inExam !== false ? 'checked' : ''} aria-label="مقرر في الاختبار" title="مقرر في الاختبار">
+      <select class="input sessions" data-bind="chapter-sessions" data-sid="${s.id}" data-cid="${c.id}" id="chs-${c.id}" aria-label="عدد جلسات الشابتر" title="عدد جلسات المذاكرة">${opts}</select>
+      <input class="input pages" type="number" min="0" data-bind="chapter-pages" data-sid="${s.id}" data-cid="${c.id}" id="chp-${c.id}" value="${c.pages || ''}" placeholder="—" aria-label="عدد الصفحات">
+      <button class="icon-btn danger" data-action="delete-chapter" data-sid="${s.id}" data-cid="${c.id}" aria-label="حذف الشابتر">✕</button>
+    </li>`;
+  }
+
+  // نموذج إضافة/تعديل مادة
+  function openSubjectForm(sid) {
+    const s = sid ? subjectById(sid) : null;
+    const v = s || { name: '', code: '', teacher: '', difficulty: 'medium', type: 'understand', source: 'book', examDate: '' };
+    openModal(s ? 'تعديل المادة' : 'إضافة مادة', `
+      <form id="subject-form" class="form-grid" autocomplete="off" novalidate>
+        <label class="field field-wide"><span>اسم المادة *</span><input id="f-name" name="name" required value="${esc(v.name)}" placeholder="مثال: فيزياء (1)"></label>
+        <label class="field"><span>رمز المادة</span><input id="f-code" name="code" value="${esc(v.code)}" placeholder="PHYS 103" dir="ltr"></label>
+        <label class="field"><span>اسم المدرس (اختياري)</span><input id="f-teacher" name="teacher" value="${esc(v.teacher)}"></label>
+        <label class="field"><span>مستوى الصعوبة</span><select id="f-difficulty" name="difficulty">${optionList(D.DIFFICULTY_LABELS, v.difficulty)}</select></label>
+        <label class="field"><span>نوع المادة</span><select id="f-type" name="type">${optionList(D.TYPE_LABELS, v.type)}</select></label>
+        <label class="field"><span>مصدر المنهج</span><select id="f-source" name="source">${optionList(D.SOURCE_LABELS, v.source)}</select></label>
+        <label class="field"><span>تاريخ الاختبار</span><input id="f-exam" name="examDate" type="date" value="${esc(v.examDate)}"></label>
+        ${s ? '' : `
+        <label class="field"><span>عدد الشابترات</span><input id="f-count" name="count" type="number" min="0" max="60" placeholder="اختياري"></label>
+        <label class="field field-wide"><span>أسماء الشابترات (سطر لكل شابتر، والصفحات بعد |)</span>
+          <textarea id="f-chapters" name="chapters" rows="5" placeholder="الحركة في بعد واحد | 22&#10;المتجهات | 18&#10;قوانين نيوتن"></textarea>
+          <span class="hint">إن تركتها فارغة وكتبت العدد، ستُنشأ شابترات باسم «الشابتر 1، 2...». يمكنك تعديلها لاحقاً من بطاقة المادة.</span></label>`}
+        <p class="hint field-wide" id="f-error" role="alert"></p>
+        <div class="modal-actions field-wide"><button type="submit" class="btn btn-primary">${s ? 'حفظ التعديلات' : 'إضافة المادة'}</button><button type="button" class="btn" data-action="close-modal">إلغاء</button></div>
+      </form>`);
+    const form = $('#subject-form');
+    $('#f-name').focus();
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = Object.fromEntries(new FormData(form).entries());
+      if (!String(f.name || '').trim()) { $('#f-error').textContent = 'اكتب اسم المادة.'; $('#f-name').focus(); return; }
+      if (s) {
+        const changed = s.difficulty !== f.difficulty || s.examDate !== f.examDate;
+        Object.assign(s, {
+          name: f.name.trim(), code: (f.code || '').trim(), teacher: (f.teacher || '').trim(),
+          difficulty: f.difficulty, type: f.type, source: f.source, examDate: f.examDate || ''
+        });
+        if (changed) { s.demoDate = false; markDirty(); }
+        toast('حُفظت تعديلات «' + s.name + '».');
+      } else {
+        const chapters = parseChapterLines(f.chapters || '', Number(f.count) || 0);
+        const sub = makeSubject(Object.assign({}, f, { chapters }), state.subjects);
+        state.subjects.push(sub);
+        markDirty();
+        toast('أُضيفت «' + sub.name + '» مع ' + chapters.length + ' شابتر.');
+      }
+      closeModal();
+      commit();
+    });
+  }
+
+  // تحويل النص إلى شابترات: "العنوان | الصفحات"
+  function parseChapterLines(text, count) {
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const chapters = lines.map((l) => {
+      const [title, pages] = l.split('|').map((x) => x.trim());
+      return makeChapter(title, parseInt(pages, 10) || 0);
+    });
+    for (let i = chapters.length; i < Math.min(count, 60); i++) chapters.push(makeChapter('الشابتر ' + (i + 1)));
+    return chapters;
+  }
+
+  function markDirty() { if (state.sessions.length) state.dirty = true; }
+
+  function deleteSubject(sid) {
+    const s = subjectById(sid);
+    if (!s) return;
+    confirmDialog(`حذف «${s.name}» مع شابتراتها وأسئلتها وجلساتها من الجدول؟ لا يمكن التراجع.`, 'احذف المادة', () => {
+      state.subjects = state.subjects.filter((x) => x.id !== sid);
+      state.sessions = state.sessions.filter((x) => x.subjectId !== sid);
+      toast('حُذفت المادة.');
+      commit();
+    });
+  }
+
+  function deleteChapter(sid, cid) {
+    const s = subjectById(sid);
+    const c = s && s.chapters.find((x) => x.id === cid);
+    if (!c) return;
+    const doIt = () => {
+      s.chapters = s.chapters.filter((x) => x.id !== cid);
+      state.sessions = state.sessions.filter((x) => {
+        if (x.subjectId !== sid || !x.chapterIds.includes(cid)) return true;
+        x.chapterIds = x.chapterIds.filter((id) => id !== cid);
+        return x.done || x.chapterIds.length > 0 || x.kind !== 'study';
+      });
+      markDirty();
+      commit();
+    };
+    if (c.questions.length) confirmDialog(`للشابتر «${c.title}» ${c.questions.length} سؤال ستُحذف معه. متابعة؟`, 'احذف الشابتر', doIt);
+    else doIt();
+  }
+
+  // ===================== الجدول =====================
+  function weekDays() {
+    const t = today();
+    const start = S.addDays(t, -S.weekday(t) + (state.ui.weekOffset || 0) * 7);
+    return Array.from({ length: 7 }, (_, i) => S.addDays(start, i));
+  }
+
+  function renderSchedule() {
+    syncSettingsForm();
+    // التنبيهات
+    const groups = { error: [], warn: [], info: [] };
+    state.warnings.forEach((w) => (groups[w.level] || groups.info).push(w.message));
+    let html = inExamBanner();
+    const overdue = state.sessions.filter(isOverdue);
+    if (!state.sessions.length) {
+      html += `<div class="alert alert-info"><div class="alert-head"><span>لم يُولَّد الجدول بعد</span><button class="btn btn-sm btn-primary" data-action="generate">توليد الجدول</button></div>
+        <p>أدخل تواريخ الاختبارات في تبويب المواد، ثم اضبط الإعدادات أعلاه واضغط «توليد الجدول».</p></div>`;
+    }
+    if (state.dirty && state.sessions.length) {
+      html += `<div class="alert alert-info"><div class="alert-head"><span>تغيّرت المواد أو الإعدادات بعد آخر توليد</span><button class="btn btn-sm btn-primary" data-action="generate">أعد التوليد</button></div></div>`;
+    }
+    if (overdue.length) html += overdueAlert(overdue);
+    const box = (lvl, title, items) => items.length ? `<div class="alert alert-${lvl}"><div class="alert-head"><span>${title}</span></div><ul>${items.map((m) => `<li>${esc(m)}</li>`).join('')}</ul></div>` : '';
+    html += box('error', 'تنبيهات عاجلة', groups.error) + box('warn', 'تنبيهات', groups.warn) + box('info', 'ملاحظات', groups.info);
+    $('#schedule-warnings').innerHTML = `<div class="warn-list">${html}</div>`;
+
+    // الشبكة الأسبوعية
+    const days = weekDays();
+    const t = today();
+    const cfg = effectiveSettings();
+    const weekSessions = state.sessions.filter((s) => s.date >= days[0] && s.date <= days[6]);
+    const rows = Math.max(cfg.slotsPerDay, ...weekSessions.map((s) => s.slot + 1));
+    const exams = {};
+    state.subjects.forEach((s) => { if (s.examDate) (exams[s.examDate] = exams[s.examDate] || []).push(s); });
+    const rest = new Set(cfg.restDays);
+
+    let g = '<div class="wg-corner"></div>';
+    days.forEach((d) => {
+      const cls = [d === t ? 'is-today' : '', rest.has(S.weekday(d)) ? 'is-rest' : ''].join(' ');
+      g += `<div class="wg-day ${cls}"><span class="d-name">${WEEKDAYS[S.weekday(d)]}</span><span class="d-date">${esc(fmtDate(d, { day: 'numeric', month: 'short' }))}</span>
+        ${(exams[d] || []).map((s) => `<span class="wg-exam">اختبار ${esc(s.name)}</span>`).join('')}</div>`;
+    });
+    for (let slot = 0; slot < rows; slot++) {
+      const [a, b] = slotRange(slot);
+      g += `<div class="wg-time"><b>الفترة ${slot + 1}</b><span>${a}</span><span>${b}</span></div>`;
+      days.forEach((d) => {
+        const here = weekSessions.filter((s) => s.date === d && s.slot === slot);
+        g += `<div class="wg-cell${rest.has(S.weekday(d)) ? ' is-rest' : ''}" data-date="${d}" data-slot="${slot}">${here.map(sessionCard).join('')}</div>`;
+      });
+    }
+    const grid = $('#schedule-grid');
+    grid.innerHTML = g;
+    $('#week-label').textContent = fmtDate(days[0], { day: 'numeric', month: 'long' }) + ' – ' + fmtDate(days[6], { day: 'numeric', month: 'long', year: 'numeric' });
+    enableDragDrop(grid);
+  }
+
+  function sessionCard(s) {
+    const sub = subjectById(s.subjectId);
+    const od = isOverdue(s);
+    return `<div class="session kind-${s.kind}${s.done ? ' is-done' : ''}${od ? ' is-overdue' : ''}" data-id="${s.id}" role="button" tabindex="0" draggable="true"
+      style="--subject-color:${colorOf(sub)}" aria-label="${esc((sub ? sub.name : '') + ': ' + sessionTitle(s))}">
+      <span class="s-sub">${esc(sub ? sub.name : '')}</span>
+      <span class="s-title">${esc(sessionTitle(s))}</span>
+      <span class="s-kind">${KIND_LABELS[s.kind]}${od ? ' · متأخرة' : ''}${s.done ? ' · تمت ✓' : ''}</span>
+    </div>`;
+  }
+
+  function moveSession(id, date, slot) {
+    const s = state.sessions.find((x) => x.id === id);
+    if (!s || !S.parseDate(date)) return;
+    s.date = date; s.slot = Math.max(0, Number(slot) || 0); s.manual = true;
+    const sub = subjectById(s.subjectId);
+    if (sub && sub.examDate && date >= sub.examDate && s.kind !== 'quick') toast('تنبيه: نقلت الجلسة إلى يوم الاختبار أو بعده.');
+    commit();
+  }
+
+  // السحب والإفلات: SortableJS إن توفر (يدعم اللمس)، وإلا السحب الأصلي للمتصفح
+  function enableDragDrop(grid) {
+    const cells = $$('.wg-cell', grid);
+    if (window.Sortable) {
+      cells.forEach((cell) => window.Sortable.create(cell, {
+        group: 'sessions', animation: 150, delay: 180, delayOnTouchOnly: true, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen',
+        onEnd: (evt) => {
+          if (evt.from === evt.to) return;
+          moveSession(evt.item.dataset.id, evt.to.dataset.date, evt.to.dataset.slot);
+        }
+      }));
+      return;
+    }
+    $$('.session', grid).forEach((el) => el.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', el.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+    }));
+    cells.forEach((cell) => {
+      cell.addEventListener('dragover', (e) => { e.preventDefault(); cell.classList.add('drag-over'); });
+      cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+      cell.addEventListener('drop', (e) => {
+        e.preventDefault();
+        cell.classList.remove('drag-over');
+        const id = e.dataTransfer.getData('text/plain');
+        if (id) moveSession(id, cell.dataset.date, cell.dataset.slot);
+      });
+    });
+  }
+
+  function openSessionModal(id) {
+    const s = state.sessions.find((x) => x.id === id);
+    if (!s) return;
+    const sub = subjectById(s.subjectId);
+    const cfg = effectiveSettings();
+    const slots = Array.from({ length: Math.max(cfg.slotsPerDay, s.slot + 1) }, (_, i) => `<option value="${i}"${i === s.slot ? ' selected' : ''}>الفترة ${i + 1} (${slotRange(i).join('–')})</option>`).join('');
+    openModal(sub ? sub.name : 'جلسة', `
+      <div><p><b>${esc(sessionTitle(s))}</b></p><p class="muted">${KIND_LABELS[s.kind]} · ${s.minutes} دقيقة · ${esc(fmtDate(s.date))}${isOverdue(s) ? ' · <span style="color:var(--red)">متأخرة</span>' : ''}</p></div>
+      <div class="modal-actions"><button class="btn btn-primary" data-action="toggle-session" data-id="${s.id}" data-close="1">${s.done ? 'إلغاء «تمت»' : 'تمت ✓'}</button></div>
+      <form id="move-form" class="form-grid">
+        <label class="field"><span>نقل إلى يوم</span><input type="date" id="mv-date" name="date" value="${s.date}" required></label>
+        <label class="field"><span>الفترة</span><select id="mv-slot" name="slot">${slots}</select></label>
+        <div class="modal-actions field-wide"><button class="btn" type="submit">نقل الجلسة</button>
+        <button class="btn btn-danger" type="button" data-action="delete-session" data-id="${s.id}">حذف الجلسة</button></div>
+      </form>`);
+    $('#move-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      closeModal();
+      moveSession(s.id, $('#mv-date').value, $('#mv-slot').value);
+      toast('نُقلت الجلسة.');
+    });
+  }
+
+  function toggleSession(id) {
+    const s = state.sessions.find((x) => x.id === id);
+    if (!s) return;
+    s.done = !s.done;
+    if (s.done) toast(s.kind === 'study' ? 'أحسنت! تقدّمك في المادة زاد.' : 'تمت الجلسة.');
+    commit();
+  }
+
+  function generate(force) {
+    const pending = state.sessions.filter((s) => !s.done && s.date >= today());
+    const manual = pending.filter((s) => s.manual).length;
+    if (!force && manual) {
+      confirmDialog(`لديك ${manual} ${manual === 1 ? 'جلسة عدّلتها' : 'جلسات عدّلتها'} يدوياً. إعادة التوليد تعيد توزيع كل الجلسات غير المنجزة. الجلسات المنجزة لا تتأثر.`, 'أعد التوليد', () => generate(true));
+      return;
+    }
+    const history = state.sessions.filter((s) => s.done);
+    const res = S.generateSchedule({ subjects: state.subjects, settings: state.settings, today: today(), history, idGen: () => uid('s') });
+    state.sessions = history.concat(res.sessions);
+    state.warnings = res.warnings;
+    state.generatedAt = new Date().toISOString();
+    state.dirty = false;
+    state.ui.weekOffset = 0;
+    save();
+    if (res.sessions.length) {
+      toast(`وُلّد الجدول: ${res.meta.counts.study} مذاكرة، ${res.meta.counts.review} مراجعة نهائية، ${res.meta.counts.spaced} مراجعة متباعدة.`);
+      if (state.ui.view !== 'schedule') { setView('schedule'); return; }
+    } else {
+      toast('لم تُنشأ جلسات. راجع التنبيهات في تبويب الجدول.');
+      if (state.ui.view !== 'schedule') { setView('schedule'); return; }
+    }
+    render();
+  }
+
+  // ===== إعدادات الجدول =====
+  function syncSettingsForm() {
+    const st = state.settings;
+    $('#set-hours').value = st.dailyHours === '' || st.dailyHours == null ? '' : st.dailyHours;
+    $('#set-session').value = st.sessionMinutes;
+    $('#set-break').value = st.breakMinutes;
+    $('#set-review').value = st.reviewDays;
+    $('#set-active').value = st.activeTime;
+    $('#set-start').value = st.startTime || (D.ACTIVE_TIMES[st.activeTime] || D.ACTIVE_TIMES.evening).start;
+    $('#set-spaced').checked = st.spacedReview !== false;
+    const rest = $('#set-rest');
+    if (!rest.children.length) {
+      rest.innerHTML = WEEKDAYS.map((n, i) => `<label class="day-pick"><input type="checkbox" id="rest-${i}" value="${i}">${n}</label>`).join('');
+    }
+    $$('input', rest).forEach((cb) => { cb.checked = (st.restDays || []).includes(Number(cb.value)); });
+  }
+
+  function onSettingsChange(e) {
+    const t = e.target;
+    const st = state.settings;
+    if (t.id === 'set-hours') st.dailyHours = t.value === '' ? '' : Number(t.value);
+    else if (t.id === 'set-session') st.sessionMinutes = Number(t.value) || 50;
+    else if (t.id === 'set-break') st.breakMinutes = Math.max(0, Number(t.value) || 0);
+    else if (t.id === 'set-review') st.reviewDays = Math.max(2, Math.min(7, Number(t.value) || 2));
+    else if (t.id === 'set-active') { st.activeTime = t.value; st.startTime = ''; }
+    else if (t.id === 'set-start') st.startTime = t.value;
+    else if (t.id === 'set-spaced') st.spacedReview = t.checked;
+    else if (t.id.startsWith('rest-')) st.restDays = $$('#set-rest input:checked').map((x) => Number(x.value));
+    else return;
+    if (t.id === 'set-hours' && (t.value === '' || Number(t.value) <= 0)) toast('لم تُحدد ساعات المذاكرة؛ سيستخدم الجدول 4 ساعات افتراضياً.');
+    if (!['set-active', 'set-start'].includes(t.id)) markDirty();
+    commit();
+  }
+
+  // ===================== خطط المذاكرة =====================
+  function renderPlans() {
+    const list = sortedSubjects();
+    $('#plans-list').innerHTML = list.length ? list.map(planCard).join('') : '<div class="empty">أضف مواد لترى خطط مذاكرتها.</div>';
+  }
+
+  function planCard(s) {
+    const mine = state.sessions.filter((x) => x.subjectId === s.id);
+    const cnt = (k) => mine.filter((x) => x.kind === k).length;
+    const totalMin = mine.reduce((a, x) => a + (Number(x.minutes) || 0), 0);
+    const bp = D.BREAK_PLANS[s.difficulty] || D.BREAK_PLANS.medium;
+    const techKeys = [...new Set([...(D.TECHNIQUES_BY_TYPE[s.type] || []), ...(D.TECHNIQUES_BY_DIFFICULTY[s.difficulty] || [])])].slice(0, 5);
+    const tips = (D.TYPE_TIPS[s.type] || D.TYPE_TIPS.understand).tips;
+    const cfg = effectiveSettings();
+
+    // تقسيم الشابترات على الجلسات
+    const excluded = s.chapters.length - examChapters(s).length;
+    const rows = examChapters(s).map((c) => {
+      const related = mine.filter((x) => x.kind === 'study' && x.chapterIds.includes(c.id)).sort((a, b) => a.date.localeCompare(b.date));
+      const est = S.partsFor(c, s.difficulty);
+      const dates = related.map((x) => `<span class="${x.done ? 'muted' : ''}">${esc(fmtDate(x.date, { day: 'numeric', month: 'short' }))}${x.done ? ' ✓' : ''}</span>`).join('، ');
+      return `<tr><td>${esc(c.title)}</td><td class="num">${related.length || est}${related.length ? '' : ' (تقديري)'}</td><td>${dates || '<span class="muted">—</span>'}</td><td class="num">${chapterPct(c)}%</td></tr>`;
+    }).join('');
+
+    // خطة الأيام الأخيرة
+    const d = daysLeft(s);
+    const exam = s.examDate;
+    const lastDays = exam ? [
+      [S.addDays(exam, -3), 'أنهِ آخر شابتر، وحدّث ورقة الملخص/القوانين.'],
+      [S.addDays(exam, -2), s.type === 'math' || s.type === 'apply' ? 'مراجعة الشابترات بحل مسألتين من كل شابتر ودفتر الأخطاء.' : 'مراجعة الشابترات بالخرائط الذهنية والبطاقات.'],
+      [S.addDays(exam, -1), 'حل نموذج اختبار كامل بتوقيت حقيقي، ثم راجع الأسئلة المعلّمة «يحتاج مراجعة». نم مبكراً.'],
+      [exam, 'مراجعة سريعة للملخص فقط (30 دقيقة)، إفطار خفيف، ووصول مبكر.']
+    ] : [];
+
+    const breakBar = [];
+    for (let i = 0; i < bp.cycles; i++) {
+      breakBar.push(`<span class="f" style="flex:${bp.focus}">${bp.focus}د</span>`);
+      breakBar.push(i < bp.cycles - 1 ? `<span class="b" style="flex:${bp.shortBreak}">${bp.shortBreak}</span>` : `<span class="l" style="flex:${bp.longBreak}">${bp.longBreak}د</span>`);
+    }
+
+    return `<article class="plan-card" style="--subject-color:${colorOf(s)}">
+      <div class="panel-title"><div><h3>${esc(s.name)} ${s.code ? `<span class="subject-code">${esc(s.code)}</span>` : ''}</h3>
+        <div class="subject-meta">${urgencyChip(s)}<span class="chip">${esc(D.DIFFICULTY_LABELS[s.difficulty])}</span><span class="chip">${esc(D.TYPE_LABELS[s.type])}</span><span class="chip">${esc(D.SOURCE_LABELS[s.source])}</span></div></div>
+        ${exam ? `<span class="muted">${esc(fmtDate(exam))}</span>` : ''}</div>
+      <p>${mine.length
+        ? `في جدولك: <b class="num">${cnt('study')}</b> جلسة مذاكرة، <b class="num">${cnt('review')}</b> مراجعة نهائية، <b class="num">${cnt('spaced')}</b> مراجعة متباعدة، بمجموع <b class="num">${(totalMin / 60).toFixed(1)}</b> ساعة.`
+        : exam ? 'ولّد الجدول من تبويب «الجدول» لترى مواعيد جلسات هذه المادة.' : 'أدخل تاريخ الاختبار لتدخل المادة الجدول.'}</p>
+      <div class="plan-grid">
+        <div class="plan-block"><h4>تقسيم الشابترات على الجلسات</h4>
+          ${excluded ? `<p class="muted">${excluded} ${excluded === 1 ? 'شابتر' : 'شابترات'} خارج الاختبار ولا تظهر هنا.</p>` : ''}
+          ${examChapters(s).length ? `<div class="table-scroll"><table class="plan-table"><thead><tr><th>الشابتر</th><th>الجلسات</th><th>المواعيد</th><th>الإنجاز</th></tr></thead><tbody>${rows}</tbody></table></div>`
+            : '<p class="empty">لا توجد شابترات؛ ستُجدول مراجعة عامة فقط.</p>'}
+        </div>
+        <div class="plan-block"><h4>تقنيات المذاكرة المناسبة</h4>
+          ${techKeys.map((k, i) => { const t = D.TECHNIQUES[k]; return `<details class="tech"${i === 0 ? ' open' : ''}><summary>${esc(t.name)}</summary><p>${esc(t.what)}</p><ol>${t.how.map((h) => `<li>${esc(h)}</li>`).join('')}</ol></details>`; }).join('')}
+        </div>
+        <div class="plan-block"><h4>توزيع فترات الراحة</h4>
+          <p><span class="num">${bp.focus}</span> دقيقة تركيز ثم <span class="num">${bp.shortBreak}</span> دقائق راحة، وبعد ${bp.cycles} ${bp.cycles === 2 ? 'دورتين' : 'دورات'} راحة طويلة <span class="num">${bp.longBreak}</span> دقيقة.</p>
+          <div class="break-bar" aria-hidden="true">${breakBar.join('')}</div>
+          <p class="muted">${esc(bp.note)} جلسات جدولك ${cfg.sessionMinutes} دقيقة؛ قسّم الجلسة الواحدة على هذا النمط.</p>
+          <h4>نصائح لمادة ${esc(D.TYPE_LABELS[s.type])}</h4>
+          <ul class="tips">${tips.map((t) => `<li>${esc(t)}</li>`).join('')}<li>${esc(D.SOURCE_TIPS[s.source])}</li></ul>
+        </div>
+        ${lastDays.length && d >= 0 ? `<div class="plan-block"><h4>خطة الأيام الأخيرة</h4><ul class="countdown-plan">${lastDays.filter(([dt]) => dt >= today()).map(([dt, txt]) => `<li><b>${esc(fmtDate(dt, { day: 'numeric', month: 'short' }))}</b><span>${esc(txt)}</span></li>`).join('')}</ul></div>` : ''}
+      </div>
+    </article>`;
+  }
+
+  // ===================== الأسئلة المتوقعة =====================
+  const openChapters = new Set();
+
+  function renderQuestions() {
+    const sel = $('#q-subject');
+    const subs = sortedSubjects();
+    if (!subs.length) {
+      sel.innerHTML = '';
+      $('#questions-list').innerHTML = '<div class="empty">أضف مواد وشابترات أولاً.</div>';
+      return;
+    }
+    if (!subs.some((s) => s.id === state.ui.qSubject)) state.ui.qSubject = subs[0].id;
+    sel.innerHTML = subs.map((s) => `<option value="${s.id}"${s.id === state.ui.qSubject ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+    $('#q-status').value = state.ui.qStatus;
+    $('#q-type').value = state.ui.qType;
+    const s = subjectById(state.ui.qSubject);
+    const all = s.chapters.flatMap((c) => c.questions);
+    let html = contentBanner() + `<div class="panel-title" style="margin-bottom:10px"><span class="muted">${all.length} سؤال · ${all.filter((q) => q.status === 'done').length} تم · ${all.filter((q) => q.status === 'review').length} يحتاج مراجعة</span>
+      ${s.chapters.length ? `<button class="btn btn-sm" data-action="gen-all-questions" data-sid="${s.id}">ولّد أسئلة إرشادية لكل الشابترات</button>` : ''}</div>`;
+    if (!s.chapters.length) html += '<div class="empty">هذه المادة بلا شابترات. أضف شابترات من تبويب المواد لتضيف أسئلتها.</div>';
+    s.chapters.forEach((c) => {
+      const qs = c.questions.filter((q) => (state.ui.qStatus === 'all' || q.status === state.ui.qStatus) && (state.ui.qType === 'all' || q.type === state.ui.qType));
+      const done = c.questions.filter((q) => q.status === 'done').length;
+      const pct = c.questions.length ? Math.round(100 * done / c.questions.length) : 0;
+      html += `<details class="q-chapter" data-cid="${c.id}"${openChapters.has(c.id) ? ' open' : ''}>
+        <summary><span class="q-sum-title">${esc(c.title)}</span><span class="num muted">${done} / ${c.questions.length}</span>${c.questions.length ? `<div style="grid-column:1/-1">${progressBar(pct, true)}</div>` : ''}</summary>
+        <div class="q-body">
+          ${qs.length ? `<ul class="q-list">${qs.map((q) => questionItem(s, c, q)).join('')}</ul>` : `<p class="muted">${c.questions.length ? 'لا أسئلة تطابق التصفية.' : 'لا أسئلة بعد.'}</p>`}
+          <form class="q-add" data-form="add-question" data-sid="${s.id}" data-cid="${c.id}">
+            <label class="field"><span>سؤال جديد</span><input class="input" name="text" id="qt-${c.id}" placeholder="اكتب السؤال المتوقع"></label>
+            <label class="field"><span>النوع</span><select name="type" id="qy-${c.id}">${optionList(D.QUESTION_TYPES, 'essay')}</select></label>
+            <button class="btn" type="submit">إضافة</button>
+          </form>
+          <div class="btn-row"><button class="btn btn-sm btn-ghost" type="button" data-action="gen-questions" data-sid="${s.id}" data-cid="${c.id}">ولّد أسئلة إرشادية لهذا الشابتر</button></div>
+        </div></details>`;
+    });
+    $('#questions-list').innerHTML = html;
+  }
+
+  function questionItem(s, c, q) {
+    return `<li class="q-item st-${q.status}">
+      <div class="q-text" dir="auto">${esc(q.text)}${q.answer ? `<details class="q-answer"><summary>الإجابة</summary><div dir="auto">${esc(q.answer)}</div></details>` : ''}</div>
+      <button class="icon-btn danger" data-action="delete-question" data-sid="${s.id}" data-cid="${c.id}" data-qid="${q.id}" aria-label="حذف السؤال">✕</button>
+      <div class="q-tags"><span class="chip">${esc(D.QUESTION_TYPES[q.type])}</span>${q.lecture ? '<span class="chip chip-accent">من المحاضرة</span>' : ''}${q.generated ? '<span class="chip">إرشادي</span>' : ''}
+        <select data-bind="q-status" data-sid="${s.id}" data-cid="${c.id}" data-qid="${q.id}" aria-label="حالة السؤال">${optionList(D.QUESTION_STATUS, q.status)}</select></div>
+    </li>`;
+  }
+
+  // توليد أسئلة إرشادية من القوالب حسب نوع المادة وموضوعات الشابتر
+  function generateQuestions(s, c) {
+    const fromBank = bankQuestions(c);
+    if (fromBank.length) { c.questions.push(...fromBank); return fromBank.length; }
+    const tpl = D.QUESTION_TEMPLATES[s.type] || D.QUESTION_TEMPLATES.understand;
+    const topics = c.topics && c.topics.length ? c.topics : [c.title];
+    const round = Math.floor(c.questions.filter((q) => q.generated).length / tpl.length);
+    const added = [];
+    for (let r = round; r < round + topics.length && !added.length; r++) {
+      tpl.forEach(([type, text], i) => {
+        const topic = topics[(i + r) % topics.length];
+        const qText = text.split('{ch}').join(c.title).split('{t}').join(topic);
+        if (!c.questions.some((q) => q.text === qText) && !added.some((q) => q.text === qText)) {
+          added.push({ id: uid('q'), text: qText, type, status: 'todo', generated: true });
+        }
+      });
+    }
+    c.questions.push(...added);
+    return added.length;
+  }
+
+  // ===================== الخطة الجامعية =====================
+  function renderCurriculum() {
+    const plan = D.STUDY_PLAN;
+    $('#curriculum-sub').textContent = `${plan.university} · ${plan.college} · ${plan.major} · القبول ${plan.admission}. أضف مواد أي مستوى إلى قائمتك بضغطة.`;
+    const codes = new Set(state.subjects.map((s) => s.code));
+    const total = plan.levels.reduce((a, l) => a + l.courses.reduce((b, c) => b + c.credits, 0), 0);
+    $('#curriculum').innerHTML = `<p class="muted" style="margin-bottom:12px">مجموع الخطة: <span class="num">${total}</span> وحدة في ${plan.levels.length} مستويات.</p><div class="levels">` + plan.levels.map((l) => {
+      const credits = l.courses.reduce((a, c) => a + c.credits, 0);
+      const missing = l.courses.filter((c) => !codes.has(c.code)).length;
+      return `<section class="level${l.status ? ' is-current' : ''}">
+        <div class="level-head"><h3>المستوى ${D.LEVEL_NAMES[l.level]}</h3><div class="btn-row">${l.status ? `<span class="chip chip-accent">${esc(l.status)}</span>` : ''}<span class="chip num">${credits} وحدة</span></div></div>
+        <ul class="course-list">${l.courses.map((c) => `<li class="course"><code>${esc(c.code)}</code><span>${esc(c.name)}${codes.has(c.code) ? ' <span class="chip chip-green">مضافة</span>' : ''}</span><span class="cr">${c.credits} و</span></li>`).join('')}</ul>
+        <button class="btn btn-sm${missing ? '' : ' btn-ghost'}" data-action="add-level" data-level="${l.level}" ${missing ? '' : 'disabled'}>${missing ? `أضف ${missing === l.courses.length ? 'مواد المستوى' : 'المواد الناقصة'} (${missing})` : 'كل المواد مضافة'}</button>
+      </section>`;
+    }).join('') + '</div>';
+  }
+
+  function addLevel(levelNo) {
+    const level = D.STUDY_PLAN.levels.find((l) => l.level === Number(levelNo));
+    if (!level) return;
+    const codes = new Set(state.subjects.map((s) => s.code));
+    const toAdd = level.courses.filter((c) => !codes.has(c.code));
+    toAdd.forEach((c) => state.subjects.push(subjectFromCourse(c, state.subjects)));
+    markDirty();
+    toast(`أُضيفت ${toAdd.length} مواد من المستوى ${D.LEVEL_NAMES[level.level]}. أضف شابتراتها وتواريخ اختباراتها.`);
+    commit();
+  }
+
+  // ===================== البيانات =====================
+  function renderHelp() { /* المحتوى ثابت في HTML */ }
+
+  function exportData() {
+    const json = JSON.stringify(Object.assign({ exportedAt: new Date().toISOString(), app: 'study-notebook' }, state), null, 2);
+    $('#export-text').value = json;
+    $('#export-box').hidden = false;
+    try {
+      const blob = new Blob([json], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'study-notebook-' + today() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    } catch (e) { /* التنزيل غير متاح: النص ظاهر للنسخ */ }
+    toast('جُهّزت النسخة الاحتياطية. إن لم يبدأ التنزيل فانسخ النص الظاهر.');
+  }
+
+  function importJson(text) {
+    let parsed;
+    try { parsed = normalizeState(JSON.parse(text)); }
+    catch (e) { toast('تعذّر الاستيراد: ' + (e instanceof SyntaxError ? 'الملف ليس JSON صالحاً.' : e.message)); return; }
+    confirmDialog(`سيُستبدل كل ما في التطبيق بـ ${parsed.subjects.length} مادة و${parsed.sessions.length} جلسة من الملف. متابعة؟`, 'استورد البيانات', () => {
+      state = parsed;
+      state.ui.view = 'dashboard';
+      toast('تم الاستيراد بنجاح.');
+      commit();
+    });
+  }
+
+  function demoDates() {
+    const offsets = [10, 13, 16, 19, 22, 25, 28, 31];
+    let i = 0;
+    state.subjects.forEach((s) => {
+      if (!s.examDate) { s.examDate = S.addDays(today(), offsets[i++ % offsets.length]); s.demoDate = true; }
+    });
+    generate(true);
+    toast('التواريخ تجريبية؛ استبدلها بالحقيقية من تبويب المواد.');
+  }
+
+  // ===================== النوافذ والإشعارات =====================
+  let lastFocus = null;
+  function openModal(title, html) {
+    lastFocus = document.activeElement;
+    $('#modal-title').textContent = title;
+    $('#modal-body').innerHTML = html;
+    $('#modal').hidden = false;
+    const first = $('#modal-body input, #modal-body select, #modal-body button');
+    if (first) first.focus();
+  }
+  function closeModal() {
+    $('#modal').hidden = true;
+    $('#modal-body').innerHTML = '';
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  }
+  // بديل confirm(): نافذة تأكيد داخل الصفحة
+  function confirmDialog(message, label, onYes) {
+    openModal('تأكيد', `<p>${esc(message)}</p><div class="modal-actions"><button class="btn btn-danger" id="confirm-yes">${esc(label)}</button><button class="btn" data-action="close-modal">إلغاء</button></div>`);
+    $('#confirm-yes').addEventListener('click', () => { closeModal(); onYes(); });
+  }
+  function toast(msg) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    const box = $('#toasts');
+    box.appendChild(el);
+    while (box.children.length > 2) box.firstElementChild.remove(); // لا نغطي المحتوى بإشعارات كثيرة
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ===================== الوضع الليلي =====================
+  function applyTheme(theme) {
+    if (theme === 'dark' || theme === 'light') document.documentElement.setAttribute('data-theme', theme);
+    else document.documentElement.removeAttribute('data-theme');
+    const dark = theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    $('#theme-toggle').textContent = dark ? 'الوضع النهاري' : 'الوضع الليلي';
+  }
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const dark = cur === 'dark' || (!cur && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const next = dark ? 'light' : 'dark';
+    storage.set(THEME_KEY, next);
+    applyTheme(next);
+  }
+
+  // ===================== الأحداث =====================
+  const actions = {
+    'goto': (el) => setView(el.dataset.view),
+    'toggle-theme': toggleTheme,
+    'close-modal': closeModal,
+    'new-subject': () => openSubjectForm(null),
+    'edit-subject': (el) => openSubjectForm(el.dataset.sid),
+    'delete-subject': (el) => deleteSubject(el.dataset.sid),
+    'delete-chapter': (el) => deleteChapter(el.dataset.sid, el.dataset.cid),
+    'dismiss-suggested': (el) => { const s = subjectById(el.dataset.sid); if (s) { s.suggested = false; commit(); } },
+    'generate': () => generate(false),
+    'week-prev': () => { state.ui.weekOffset--; commit(); },
+    'week-next': () => { state.ui.weekOffset++; commit(); },
+    'week-today': () => { state.ui.weekOffset = 0; commit(); },
+    'open-session': (el) => openSessionModal(el.dataset.id),
+    'toggle-session': (el) => { if (el.dataset.close) closeModal(); toggleSession(el.dataset.id); },
+    'delete-session': (el) => { state.sessions = state.sessions.filter((s) => s.id !== el.dataset.id); closeModal(); toast('حُذفت الجلسة.'); commit(); },
+    'demo-dates': demoDates,
+    'convert-inexam': convertInExam,
+    'apply-content': (el) => applyContent(el.dataset.sid),
+    'dismiss-content': (el) => { const s = subjectById(el.dataset.sid); if (s) { s.contentDismissed = D.COURSE_CONTENT_VERSION[s.code]; commit(); } },
+    'keep-done': () => { state.inExamAsked = true; commit(); },
+    'clear-demo': () => { state.subjects.forEach((s) => { if (s.demoDate) { s.examDate = ''; s.demoDate = false; } }); state.sessions = state.sessions.filter((x) => x.done); state.warnings = []; toast('مُسحت التواريخ التجريبية والجلسات غير المنجزة.'); commit(); },
+    'add-level': (el) => addLevel(el.dataset.level),
+    'gen-questions': (el) => {
+      const s = subjectById(el.dataset.sid); const c = s && s.chapters.find((x) => x.id === el.dataset.cid);
+      if (!c) return;
+      openChapters.add(c.id);
+      const n = generateQuestions(s, c);
+      toast(n ? `أُضيف ${n} أسئلة إرشادية. عدّلها أو احذف ما لا يناسب منهجك.` : 'كل الأسئلة الإرشادية لهذا الشابتر مضافة مسبقاً.');
+      commit();
+    },
+    'gen-all-questions': (el) => {
+      const s = subjectById(el.dataset.sid); if (!s) return;
+      const n = s.chapters.reduce((a, c) => a + generateQuestions(s, c), 0);
+      toast(n ? `أُضيف ${n} سؤالاً إرشادياً لكل الشابترات.` : 'لا أسئلة جديدة؛ كلها مضافة مسبقاً.');
+      commit();
+    },
+    'delete-question': (el) => {
+      const s = subjectById(el.dataset.sid); const c = s && s.chapters.find((x) => x.id === el.dataset.cid);
+      if (!c) return;
+      c.questions = c.questions.filter((q) => q.id !== el.dataset.qid);
+      commit();
+    },
+    'timer-toggle': timerToggle,
+    'timer-reset': timerReset,
+    'timer-skip': timerSkip,
+    'export': exportData,
+    'copy-export': () => {
+      const ta = $('#export-text');
+      const fallback = () => { ta.focus(); ta.select(); toast('حدّد النص وانسخه يدوياً.'); };
+      try { navigator.clipboard.writeText(ta.value).then(() => toast('نُسخت البيانات.'), fallback); } catch (e) { fallback(); }
+    },
+    'import-text': () => { const v = $('#import-text').value.trim(); if (v) importJson(v); else toast('الصق محتوى JSON أولاً.'); },
+    'reset': () => confirmDialog('مسح كل المواد والجدول والأسئلة وإعادة التطبيق لحالته الأولى (مواد المستوى الأول)؟ صدّر نسخة احتياطية قبل ذلك إن احتجت.', 'امسح كل البيانات', () => {
+      state = createInitialState();
+      storage.remove(STORAGE_KEY);
+      toast('أُعيد التطبيق لحالته الأولى.');
+      commit();
+    })
+  };
+
+  document.addEventListener('click', (e) => {
+    const tab = e.target.closest('.tab');
+    if (tab) { setView(tab.dataset.view); return; }
+    const el = e.target.closest('[data-action]');
+    if (el && actions[el.dataset.action]) {
+      if (el.tagName !== 'INPUT') e.preventDefault();
+      actions[el.dataset.action](el);
+      return;
+    }
+    const card = e.target.closest('.session');
+    if (card) { openSessionModal(card.dataset.id); return; }
+    if (e.target.id === 'modal') closeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#modal').hidden) closeModal();
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('session')) {
+      e.preventDefault();
+      openSessionModal(e.target.dataset.id);
+    }
+  });
+
+  // تعديلات مباشرة داخل البطاقات
+  document.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.closest('#settings-form')) { onSettingsChange(e); return; }
+    if (t.id === 'q-subject') { state.ui.qSubject = t.value; commit(); return; }
+    if (t.id === 'q-status') { state.ui.qStatus = t.value; commit(); return; }
+    if (t.id === 'q-type') { state.ui.qType = t.value; commit(); return; }
+    if (t.id === 'import-file') {
+      const file = t.files && t.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => importJson(String(reader.result));
+      reader.onerror = () => toast('تعذّرت قراءة الملف.');
+      reader.readAsText(file);
+      t.value = '';
+      return;
+    }
+    const bind = t.dataset && t.dataset.bind;
+    if (!bind) return;
+    const s = subjectById(t.dataset.sid);
+    if (!s) return;
+    const c = t.dataset.cid ? s.chapters.find((x) => x.id === t.dataset.cid) : null;
+    switch (bind) {
+      case 'examDate':
+        s.examDate = S.parseDate(t.value) ? t.value : '';
+        s.demoDate = false;
+        markDirty();
+        commit();
+        if (s.examDate && S.diffDays(today(), s.examDate) < 0) toast('هذا التاريخ مضى؛ لن تدخل المادة الجدول.');
+        break;
+      case 'chapter-title':
+        if (c) { c.title = t.value.trim() || c.title; t.value = c.title; save(); }
+        break;
+      case 'chapter-pages':
+        // الصفحات تغيّر العدد التلقائي للجلسات، فنعيد العرض
+        if (c) { c.pages = Math.max(0, parseInt(t.value, 10) || 0); markDirty(); commit(); }
+        break;
+      case 'chapter-sessions':
+        if (c) {
+          const v = parseInt(t.value, 10) || 0;
+          if (v > 0) c.sessions = v; else delete c.sessions;
+          markDirty();
+          commit();
+        }
+        break;
+      case 'chapter-inexam':
+        if (c) { c.inExam = t.checked; state.inExamAsked = true; markDirty(); commit(); }
+        break;
+      case 'exam-scope':
+        if (t.value !== 'custom') {
+          const n = t.value === 'all' ? s.chapters.length - 1 : Number(t.value);
+          s.chapters.forEach((ch, i) => { ch.inExam = i <= n; });
+          state.inExamAsked = true;
+          markDirty();
+          commit();
+        }
+        break;
+      case 'chapter-done':
+        if (c) { c.done = t.checked; markDirty(); commit(); }
+        break;
+      case 'q-status': {
+        const q = c && c.questions.find((x) => x.id === t.dataset.qid);
+        if (q) { q.status = t.value; commit(); }
+        break;
+      }
+    }
+  });
+
+  document.addEventListener('submit', (e) => {
+    const f = e.target;
+    if (f.dataset.form === 'add-chapter') {
+      e.preventDefault();
+      const s = subjectById(f.dataset.sid);
+      const title = f.elements.title.value.trim();
+      if (!s) return;
+      if (!title) { toast('اكتب عنوان الشابتر.'); f.elements.title.focus(); return; }
+      s.chapters.push(makeChapter(title, f.elements.pages.value));
+      markDirty();
+      commit();
+      const input = $('#newch-' + s.id);
+      if (input) input.focus();
+    } else if (f.dataset.form === 'add-question') {
+      e.preventDefault();
+      const s = subjectById(f.dataset.sid);
+      const c = s && s.chapters.find((x) => x.id === f.dataset.cid);
+      const text = f.elements.text.value.trim();
+      if (!c) return;
+      if (!text) { toast('اكتب نص السؤال.'); return; }
+      c.questions.push({ id: uid('q'), text, type: f.elements.type.value, status: 'todo', generated: false });
+      openChapters.add(c.id);
+      commit();
+      const input = $('#qt-' + c.id);
+      if (input) input.focus();
+    }
+  });
+
+  // حفظ حالة فتح شابترات الأسئلة
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (d.classList && d.classList.contains('q-chapter')) {
+      if (d.open) openChapters.add(d.dataset.cid); else openChapters.delete(d.dataset.cid);
+    }
+  }, true);
+
+  // ===================== التشغيل =====================
+  applyTheme(storage.get(THEME_KEY));
+  const hash = (location.hash || '').replace('#', '');
+  if (VIEWS.includes(hash)) state.ui.view = hash;
+  render();
+  // تحديث العرض عند تغيّر اليوم (مثلاً إذا بقيت الصفحة مفتوحة بعد منتصف الليل)
+  let lastDay = today();
+  setInterval(() => { if (today() !== lastDay) { lastDay = today(); render(); } }, 60000);
+})();
+
+</script>
+</body>
+</html>

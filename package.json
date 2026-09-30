@@ -1,0 +1,11 @@
+{
+  "name": "study-notebook",
+  "version": "1.0.0",
+  "description": "دفتر المذاكرة: تطبيق ويب عربي لتنظيم المواد والاختبارات وتوليد جدول دراسي ذكي، يعمل بالكامل في المتصفح",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/scheduler.test.js",
+    "build": "node tools/build.js"
+  },
+  "license": "MIT"
+}
