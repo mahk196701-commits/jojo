@@ -99,7 +99,9 @@
   function courseChapters(code) {
     const suggested = D.SUGGESTED_CHAPTERS[code] || [];
     return suggested.map((c) => {
-      const ch = makeChapter(c.title, 0, c.topics, c.bank);
+        const ch = makeChapter(c.title, 0, c.topics, c.bank);
+      if (c.sessions) ch.sessions = c.sessions;
+      ch.sessionsSet = true;
       ch.questions = bankQuestions(ch);
       return ch;
     });
@@ -133,6 +135,7 @@
   function normalizeState(raw) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.subjects)) throw new Error('بنية الملف غير صحيحة: لا توجد قائمة مواد.');
     const st = createInitialState();
+    let migratedSessions = false;
     st.subjects = [];
     st.settings = Object.assign(defaultSettings(), raw.settings || {});
     raw.subjects.forEach((s) => {
@@ -148,6 +151,14 @@
         if (c && c.id) ch.id = String(c.id);
         ch.done = !!(c && c.done);
         ch.inExam = !(c && c.inExam === false);
+        if (c && Number(c.sessions) > 0) ch.sessions = Math.min(10, Math.round(Number(c.sessions)));
+        // شابترات البنك المحفوظة قبل إضافة «الجلسات»: نطبّق العدد المقترح مرة واحدة فقط
+        ch.sessionsSet = !!(c && c.sessionsSet);
+        if (ch.bank && !ch.sessionsSet) {
+          const def = ((D.SUGGESTED_CHAPTERS[s.code] || []).find((x) => x.bank === ch.bank) || {}).sessions;
+          if (def && !ch.sessions) { ch.sessions = def; migratedSessions = true; }
+          ch.sessionsSet = true;
+        }
         ch.questions = (Array.isArray(c && c.questions) ? c.questions : []).filter((q) => q && q.text).map((q) => ({
           id: q.id ? String(q.id) : uid('q'), text: String(q.text),
           type: D.QUESTION_TYPES[q.type] ? q.type : 'essay',
@@ -167,6 +178,7 @@
     st.dirty = !!raw.dirty;
     st.focusMinutes = Number(raw.focusMinutes) || 0;
     st.inExamAsked = !!raw.inExamAsked;
+    if (migratedSessions && st.sessions.some((x) => !x.done)) st.dirty = true;
     st.ui = Object.assign(st.ui, raw.ui || {});
     return st;
   }
@@ -534,7 +546,7 @@
         </div>
         <div>
           ${s.suggested ? `<p class="suggested-note">الشابترات مقترحة من توصيف المقرر المعتاد. عدّل العناوين وأضف عدد الصفحات لتطابق منهجك. <button class="btn btn-sm btn-ghost" data-action="dismiss-suggested" data-sid="${s.id}">فهمت</button></p>` : ''}
-          ${s.chapters.length ? `<div class="chapter-head"><span title="أنهيت مذاكرته">أنهيت</span><span>الشابتر</span><span title="مقرر في الاختبار">مقرر</span><span>الصفحات</span><span>الإنجاز</span><span></span></div>
+          ${s.chapters.length ? `<div class="chapter-head"><span title="أنهيت مذاكرته">أنهيت</span><span>الشابتر</span><span title="مقرر في الاختبار">مقرر</span><span title="عدد جلسات المذاكرة">الجلسات</span><span>الصفحات</span><span></span></div>
           <ul class="chapter-list">${s.chapters.map((c) => chapterRow(s, c)).join('')}</ul>`
             : '<p class="empty">لا توجد شابترات. المادة بلا شابترات تُجدول لها مراجعة عامة فقط.</p>'}
           <form class="btn-row" data-form="add-chapter" data-sid="${s.id}" style="margin-top:8px">
@@ -561,12 +573,17 @@
 
   function chapterRow(s, c) {
     const pct = chapterPct(c);
+    const auto = S.partsFor(Object.assign({}, c, { sessions: 0 }), s.difficulty);
+    const manual = Number(c.sessions) || 0;
+    const opts = [`<option value="0"${manual ? '' : ' selected'}>آلي (${auto})</option>`]
+      .concat(Array.from({ length: 8 }, (_, i) => `<option value="${i + 1}"${manual === i + 1 ? ' selected' : ''}>${i + 1}</option>`)).join('');
     return `<li class="chapter-row${c.inExam === false ? ' not-in-exam' : ''}">
       <input type="checkbox" data-bind="chapter-done" data-sid="${s.id}" data-cid="${c.id}" ${c.done ? 'checked' : ''} aria-label="أنهيت مذاكرة الشابتر" title="أنهيت مذاكرته">
-      <input class="input" data-bind="chapter-title" data-sid="${s.id}" data-cid="${c.id}" id="cht-${c.id}" value="${esc(c.title)}" aria-label="عنوان الشابتر">
+      <div class="chapter-main"><input class="input" data-bind="chapter-title" data-sid="${s.id}" data-cid="${c.id}" id="cht-${c.id}" value="${esc(c.title)}" aria-label="عنوان الشابتر" dir="auto">
+        <div class="chapter-sub">${progressBar(pct, true)}<span class="chapter-pct">${pct}%</span></div></div>
       <input type="checkbox" data-bind="chapter-inexam" data-sid="${s.id}" data-cid="${c.id}" ${c.inExam !== false ? 'checked' : ''} aria-label="مقرر في الاختبار" title="مقرر في الاختبار">
+      <select class="input sessions" data-bind="chapter-sessions" data-sid="${s.id}" data-cid="${c.id}" id="chs-${c.id}" aria-label="عدد جلسات الشابتر" title="عدد جلسات المذاكرة">${opts}</select>
       <input class="input pages" type="number" min="0" data-bind="chapter-pages" data-sid="${s.id}" data-cid="${c.id}" id="chp-${c.id}" value="${c.pages || ''}" placeholder="—" aria-label="عدد الصفحات">
-      <div><div class="chapter-pct">${pct}%</div>${progressBar(pct, true)}</div>
       <button class="icon-btn danger" data-action="delete-chapter" data-sid="${s.id}" data-cid="${c.id}" aria-label="حذف الشابتر">✕</button>
     </li>`;
   }
@@ -1224,7 +1241,16 @@
         if (c) { c.title = t.value.trim() || c.title; t.value = c.title; save(); }
         break;
       case 'chapter-pages':
-        if (c) { c.pages = Math.max(0, parseInt(t.value, 10) || 0); markDirty(); save(); }
+        // الصفحات تغيّر العدد التلقائي للجلسات، فنعيد العرض
+        if (c) { c.pages = Math.max(0, parseInt(t.value, 10) || 0); markDirty(); commit(); }
+        break;
+      case 'chapter-sessions':
+        if (c) {
+          const v = parseInt(t.value, 10) || 0;
+          if (v > 0) c.sessions = v; else delete c.sessions;
+          markDirty();
+          commit();
+        }
         break;
       case 'chapter-inexam':
         if (c) { c.inExam = t.checked; state.inExamAsked = true; markDirty(); commit(); }

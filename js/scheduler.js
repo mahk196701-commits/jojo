@@ -99,8 +99,11 @@
   }
 
   // عدد جلسات المذاكرة التي يحتاجها الشابتر حسب الصفحات أو الصعوبة
+  // الأولوية: عدد الجلسات الذي حددته الطالبة، ثم الصفحات، ثم الصعوبة
   function partsFor(chapter, difficulty) {
     const cfg = DIFFICULTY[difficulty] || DIFFICULTY.medium;
+    const manual = Math.round(Number(chapter && chapter.sessions) || 0);
+    if (manual > 0) return clamp(manual, 1, 10);
     const pages = Number(chapter && chapter.pages) || 0;
     if (pages > 0) return clamp(Math.ceil(pages / cfg.pagesPerSession), 1, 6);
     return cfg.sessionsPerChapter;

@@ -226,11 +226,15 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 .exam-box .countdown { padding: 8px; }
 .hijri { font-size: var(--step--1); color: var(--muted); }
 .chapter-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.chapter-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 70px 56px auto; gap: 8px; align-items: center; padding: 4px 0; }
+.chapter-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 96px 64px auto; gap: 8px; align-items: center; padding: 4px 0; }
 .chapter-row .input { padding: 5px 8px; }
 .chapter-row .pages { text-align: center; }
-.chapter-pct { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); text-align: center; }
-.chapter-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 70px 56px auto; gap: 8px; font-size: var(--step--1); color: var(--muted); font-weight: 600; }
+.chapter-pct { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); min-width: 3.2em; text-align: end; }
+.chapter-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.chapter-sub { display: flex; align-items: center; gap: 6px; }
+.chapter-sub .progress { flex: 1; }
+.chapter-row .sessions { padding: 5px 4px; font-size: var(--step--1); }
+.chapter-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px 96px 64px auto; gap: 8px; font-size: var(--step--1); color: var(--muted); font-weight: 600; }
 .chapter-head span:nth-child(1), .chapter-head span:nth-child(3) { text-align: center; }
 .chapter-row > input[type="checkbox"] { justify-self: center; }
 .chapter-row.not-in-exam .input, .chapter-row.not-in-exam .chapter-pct { opacity: 0.5; }
@@ -380,7 +384,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 /* ===== الشاشات الصغيرة ===== */
 @media (max-width: 720px) {
   .subject-body { grid-template-columns: minmax(0, 1fr); }
-  .chapter-row, .chapter-head { grid-template-columns: 36px minmax(0, 1fr) 32px 48px 40px auto; gap: 4px; }
+  .chapter-row, .chapter-head { grid-template-columns: 30px minmax(0, 1fr) 28px 74px 44px auto; gap: 4px; }
   .q-add { grid-template-columns: minmax(0, 1fr); }
   .brand-name { font-size: var(--step-2); }
   .stat-value { font-size: 1.4rem; }
@@ -605,7 +609,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
             </li>
             <li>
               <h3>أدخل تواريخ الاختبارات</h3>
-              <p>في بطاقة كل مادة عمودان: <b>«مقرر»</b> للشابترات المطلوبة في الاختبار (الجدول يذاكر ويراجع هذه فقط)، و<b>«أنهيت»</b> للشابتر الذي أنهيت مذاكرته فلا يُجدول مرة أخرى. ولتحديد المقرر بسرعة اختر من «الاختبار يشمل» مثلاً «حتى: الشابتر 4».</p>
+              <p>في بطاقة كل مادة عمودان: <b>«مقرر»</b> للشابترات المطلوبة في الاختبار (الجدول يذاكر ويراجع هذه فقط)، و<b>«أنهيت»</b> للشابتر الذي أنهيت مذاكرته فلا يُجدول مرة أخرى، و<b>«الجلسات»</b> لتحديد عدد جلسات مذاكرة كل شابتر. «آلي» يحسبها من الصفحات إن أدخلتها، وإلا من الصعوبة: سهل 1، متوسط 2، صعب 3. ولتحديد المقرر بسرعة اختر من «الاختبار يشمل» مثلاً «حتى: الشابتر 4».</p>
               <p>اختر التاريخ من حقل «تاريخ الاختبار» في بطاقة كل مادة. يحسب التطبيق الأيام المتبقية ويرتب المواد حسب الأقرب، ويلوّنها: <span class="chip chip-red">أحمر</span> أقل من 7 أيام، <span class="chip chip-orange">برتقالي</span> من 7 إلى 14، <span class="chip chip-green">أخضر</span> أكثر من 14.</p>
             </li>
             <li>
@@ -1016,18 +1020,19 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
   const D = root.StudyData;
 
   // شابترات فيزياء (1) كما في شرائح المحاضرة
+  // sessions: جلسات مقترحة حسب حجم الشابتر في الشرائح (المتجهات والطاقة المحافظة أقصر، قوانين نيوتن أطول)
   const PHYS103_CHAPTERS = [
-    { title: 'Ch 2 — Motion in One Dimension', bank: 'PHYS103-2',
+    { title: 'Ch 2 — Motion in One Dimension', bank: 'PHYS103-2', sessions: 2,
       topics: ['Displacement vs distance', 'Average velocity and speed', 'Instantaneous velocity', 'Acceleration', 'Constant acceleration equations', 'Free fall'] },
-    { title: 'Ch 3 — Vectors', bank: 'PHYS103-3',
+    { title: 'Ch 3 — Vectors', bank: 'PHYS103-3', sessions: 1,
       topics: ['Cartesian and polar coordinates', 'Scalars and vectors', 'Adding and subtracting vectors', 'Components and unit vectors'] },
-    { title: 'Ch 4 — Motion in Two Dimensions', bank: 'PHYS103-4',
+    { title: 'Ch 4 — Motion in Two Dimensions', bank: 'PHYS103-4', sessions: 2,
       topics: ['Position, velocity and acceleration vectors', '2D motion with constant acceleration', 'Projectile motion', 'Uniform circular motion', 'Tangential and radial acceleration'] },
-    { title: 'Ch 5 — The Laws of Motion', bank: 'PHYS103-5',
+    { title: 'Ch 5 — The Laws of Motion', bank: 'PHYS103-5', sessions: 3,
       topics: ['Contact and field forces', 'Newton\'s first law', 'Mass', 'Newton\'s second law', 'Weight', 'Newton\'s third law', 'Equilibrium and net force models', 'Friction'] },
-    { title: 'Ch 7 — Energy of a System', bank: 'PHYS103-7',
+    { title: 'Ch 7 — Energy of a System', bank: 'PHYS103-7', sessions: 2,
       topics: ['System and environment', 'Work by a constant force', 'Scalar product', 'Work by a varying force (springs)', 'Work–kinetic energy theorem', 'Potential energy'] },
-    { title: 'Ch 8 — Conservation of Energy', bank: 'PHYS103-8',
+    { title: 'Ch 8 — Conservation of Energy', bank: 'PHYS103-8', sessions: 1,
       topics: ['Nonisolated system', 'Isolated system', 'Conservation of mechanical energy'] }
   ];
 
@@ -1235,8 +1240,11 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
   }
 
   // عدد جلسات المذاكرة التي يحتاجها الشابتر حسب الصفحات أو الصعوبة
+  // الأولوية: عدد الجلسات الذي حددته الطالبة، ثم الصفحات، ثم الصعوبة
   function partsFor(chapter, difficulty) {
     const cfg = DIFFICULTY[difficulty] || DIFFICULTY.medium;
+    const manual = Math.round(Number(chapter && chapter.sessions) || 0);
+    if (manual > 0) return clamp(manual, 1, 10);
     const pages = Number(chapter && chapter.pages) || 0;
     if (pages > 0) return clamp(Math.ceil(pages / cfg.pagesPerSession), 1, 6);
     return cfg.sessionsPerChapter;
@@ -1778,7 +1786,9 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
   function courseChapters(code) {
     const suggested = D.SUGGESTED_CHAPTERS[code] || [];
     return suggested.map((c) => {
-      const ch = makeChapter(c.title, 0, c.topics, c.bank);
+        const ch = makeChapter(c.title, 0, c.topics, c.bank);
+      if (c.sessions) ch.sessions = c.sessions;
+      ch.sessionsSet = true;
       ch.questions = bankQuestions(ch);
       return ch;
     });
@@ -1812,6 +1822,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
   function normalizeState(raw) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.subjects)) throw new Error('بنية الملف غير صحيحة: لا توجد قائمة مواد.');
     const st = createInitialState();
+    let migratedSessions = false;
     st.subjects = [];
     st.settings = Object.assign(defaultSettings(), raw.settings || {});
     raw.subjects.forEach((s) => {
@@ -1827,6 +1838,14 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
         if (c && c.id) ch.id = String(c.id);
         ch.done = !!(c && c.done);
         ch.inExam = !(c && c.inExam === false);
+        if (c && Number(c.sessions) > 0) ch.sessions = Math.min(10, Math.round(Number(c.sessions)));
+        // شابترات البنك المحفوظة قبل إضافة «الجلسات»: نطبّق العدد المقترح مرة واحدة فقط
+        ch.sessionsSet = !!(c && c.sessionsSet);
+        if (ch.bank && !ch.sessionsSet) {
+          const def = ((D.SUGGESTED_CHAPTERS[s.code] || []).find((x) => x.bank === ch.bank) || {}).sessions;
+          if (def && !ch.sessions) { ch.sessions = def; migratedSessions = true; }
+          ch.sessionsSet = true;
+        }
         ch.questions = (Array.isArray(c && c.questions) ? c.questions : []).filter((q) => q && q.text).map((q) => ({
           id: q.id ? String(q.id) : uid('q'), text: String(q.text),
           type: D.QUESTION_TYPES[q.type] ? q.type : 'essay',
@@ -1846,6 +1865,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
     st.dirty = !!raw.dirty;
     st.focusMinutes = Number(raw.focusMinutes) || 0;
     st.inExamAsked = !!raw.inExamAsked;
+    if (migratedSessions && st.sessions.some((x) => !x.done)) st.dirty = true;
     st.ui = Object.assign(st.ui, raw.ui || {});
     return st;
   }
@@ -2213,7 +2233,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
         </div>
         <div>
           ${s.suggested ? `<p class="suggested-note">الشابترات مقترحة من توصيف المقرر المعتاد. عدّل العناوين وأضف عدد الصفحات لتطابق منهجك. <button class="btn btn-sm btn-ghost" data-action="dismiss-suggested" data-sid="${s.id}">فهمت</button></p>` : ''}
-          ${s.chapters.length ? `<div class="chapter-head"><span title="أنهيت مذاكرته">أنهيت</span><span>الشابتر</span><span title="مقرر في الاختبار">مقرر</span><span>الصفحات</span><span>الإنجاز</span><span></span></div>
+          ${s.chapters.length ? `<div class="chapter-head"><span title="أنهيت مذاكرته">أنهيت</span><span>الشابتر</span><span title="مقرر في الاختبار">مقرر</span><span title="عدد جلسات المذاكرة">الجلسات</span><span>الصفحات</span><span></span></div>
           <ul class="chapter-list">${s.chapters.map((c) => chapterRow(s, c)).join('')}</ul>`
             : '<p class="empty">لا توجد شابترات. المادة بلا شابترات تُجدول لها مراجعة عامة فقط.</p>'}
           <form class="btn-row" data-form="add-chapter" data-sid="${s.id}" style="margin-top:8px">
@@ -2240,12 +2260,17 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 
   function chapterRow(s, c) {
     const pct = chapterPct(c);
+    const auto = S.partsFor(Object.assign({}, c, { sessions: 0 }), s.difficulty);
+    const manual = Number(c.sessions) || 0;
+    const opts = [`<option value="0"${manual ? '' : ' selected'}>آلي (${auto})</option>`]
+      .concat(Array.from({ length: 8 }, (_, i) => `<option value="${i + 1}"${manual === i + 1 ? ' selected' : ''}>${i + 1}</option>`)).join('');
     return `<li class="chapter-row${c.inExam === false ? ' not-in-exam' : ''}">
       <input type="checkbox" data-bind="chapter-done" data-sid="${s.id}" data-cid="${c.id}" ${c.done ? 'checked' : ''} aria-label="أنهيت مذاكرة الشابتر" title="أنهيت مذاكرته">
-      <input class="input" data-bind="chapter-title" data-sid="${s.id}" data-cid="${c.id}" id="cht-${c.id}" value="${esc(c.title)}" aria-label="عنوان الشابتر">
+      <div class="chapter-main"><input class="input" data-bind="chapter-title" data-sid="${s.id}" data-cid="${c.id}" id="cht-${c.id}" value="${esc(c.title)}" aria-label="عنوان الشابتر" dir="auto">
+        <div class="chapter-sub">${progressBar(pct, true)}<span class="chapter-pct">${pct}%</span></div></div>
       <input type="checkbox" data-bind="chapter-inexam" data-sid="${s.id}" data-cid="${c.id}" ${c.inExam !== false ? 'checked' : ''} aria-label="مقرر في الاختبار" title="مقرر في الاختبار">
+      <select class="input sessions" data-bind="chapter-sessions" data-sid="${s.id}" data-cid="${c.id}" id="chs-${c.id}" aria-label="عدد جلسات الشابتر" title="عدد جلسات المذاكرة">${opts}</select>
       <input class="input pages" type="number" min="0" data-bind="chapter-pages" data-sid="${s.id}" data-cid="${c.id}" id="chp-${c.id}" value="${c.pages || ''}" placeholder="—" aria-label="عدد الصفحات">
-      <div><div class="chapter-pct">${pct}%</div>${progressBar(pct, true)}</div>
       <button class="icon-btn danger" data-action="delete-chapter" data-sid="${s.id}" data-cid="${c.id}" aria-label="حذف الشابتر">✕</button>
     </li>`;
   }
@@ -2903,7 +2928,16 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
         if (c) { c.title = t.value.trim() || c.title; t.value = c.title; save(); }
         break;
       case 'chapter-pages':
-        if (c) { c.pages = Math.max(0, parseInt(t.value, 10) || 0); markDirty(); save(); }
+        // الصفحات تغيّر العدد التلقائي للجلسات، فنعيد العرض
+        if (c) { c.pages = Math.max(0, parseInt(t.value, 10) || 0); markDirty(); commit(); }
+        break;
+      case 'chapter-sessions':
+        if (c) {
+          const v = parseInt(t.value, 10) || 0;
+          if (v > 0) c.sessions = v; else delete c.sessions;
+          markDirty();
+          commit();
+        }
         break;
       case 'chapter-inexam':
         if (c) { c.inExam = t.checked; state.inExamAsked = true; markDirty(); commit(); }

@@ -161,3 +161,13 @@ test('لا شابتر مقرر: مراجعة عامة مع تنبيه واضح',
   assert.equal(res.sessions.filter((s) => s.kind === 'study').length, 0);
   assert.ok(res.warnings.some((w) => w.message.includes('لم تحدد أي شابتر مقرر')));
 });
+
+test('عدد الجلسات اليدوي للشابتر يتقدم على الصعوبة والصفحات', () => {
+  assert.equal(S.partsFor({ sessions: 1, pages: 40 }, 'hard'), 1);
+  assert.equal(S.partsFor({ sessions: 0 }, 'hard'), 3);
+  const sub = subject('a', 20, 3, 'hard');
+  sub.chapters[0].sessions = 1; sub.chapters[1].sessions = 2;
+  const res = run([sub]);
+  const count = (id) => res.sessions.filter((s) => s.kind === 'study' && s.chapterIds.includes(id)).length;
+  assert.deepEqual([count('a_c0'), count('a_c1'), count('a_c2')], [1, 2, 3]);
+});

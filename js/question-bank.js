@@ -9,18 +9,19 @@
   const D = root.StudyData;
 
   // شابترات فيزياء (1) كما في شرائح المحاضرة
+  // sessions: جلسات مقترحة حسب حجم الشابتر في الشرائح (المتجهات والطاقة المحافظة أقصر، قوانين نيوتن أطول)
   const PHYS103_CHAPTERS = [
-    { title: 'Ch 2 — Motion in One Dimension', bank: 'PHYS103-2',
+    { title: 'Ch 2 — Motion in One Dimension', bank: 'PHYS103-2', sessions: 2,
       topics: ['Displacement vs distance', 'Average velocity and speed', 'Instantaneous velocity', 'Acceleration', 'Constant acceleration equations', 'Free fall'] },
-    { title: 'Ch 3 — Vectors', bank: 'PHYS103-3',
+    { title: 'Ch 3 — Vectors', bank: 'PHYS103-3', sessions: 1,
       topics: ['Cartesian and polar coordinates', 'Scalars and vectors', 'Adding and subtracting vectors', 'Components and unit vectors'] },
-    { title: 'Ch 4 — Motion in Two Dimensions', bank: 'PHYS103-4',
+    { title: 'Ch 4 — Motion in Two Dimensions', bank: 'PHYS103-4', sessions: 2,
       topics: ['Position, velocity and acceleration vectors', '2D motion with constant acceleration', 'Projectile motion', 'Uniform circular motion', 'Tangential and radial acceleration'] },
-    { title: 'Ch 5 — The Laws of Motion', bank: 'PHYS103-5',
+    { title: 'Ch 5 — The Laws of Motion', bank: 'PHYS103-5', sessions: 3,
       topics: ['Contact and field forces', 'Newton\'s first law', 'Mass', 'Newton\'s second law', 'Weight', 'Newton\'s third law', 'Equilibrium and net force models', 'Friction'] },
-    { title: 'Ch 7 — Energy of a System', bank: 'PHYS103-7',
+    { title: 'Ch 7 — Energy of a System', bank: 'PHYS103-7', sessions: 2,
       topics: ['System and environment', 'Work by a constant force', 'Scalar product', 'Work by a varying force (springs)', 'Work–kinetic energy theorem', 'Potential energy'] },
-    { title: 'Ch 8 — Conservation of Energy', bank: 'PHYS103-8',
+    { title: 'Ch 8 — Conservation of Energy', bank: 'PHYS103-8', sessions: 1,
       topics: ['Nonisolated system', 'Isolated system', 'Conservation of mechanical energy'] }
   ];
 
